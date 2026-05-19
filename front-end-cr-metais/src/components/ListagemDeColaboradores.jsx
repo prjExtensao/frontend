@@ -5,7 +5,7 @@ import { listarUsuarios, excluirUsuario, editarUsuario, getUsuarioLogadoId, isUs
 
 const ITENS_POR_PAGINA = 8;
 
-const ColaboradorItem = ({ colaborador, onExcluir, onEditar, editando, dadosEditados, onDadosChange, onSalvar, onCancelar }) => {
+const ColaboradorItem = ({ colaborador, onExcluir, onEditar, editando, dadosEditados, onDadosChange, onSalvar, onCancelar, usuarioLogadoId }) => {
   if (editando) {
     return (
       <div className="colaborador-line editando">
@@ -45,7 +45,14 @@ const ColaboradorItem = ({ colaborador, onExcluir, onEditar, editando, dadosEdit
         <span className="colaborador-cargo">{colaborador.cargo ?? "—"}</span>
         <div className="colaborador-acoes-container">
           <button className="btn-editar-inline" onClick={() => onEditar(colaborador)} title="Editar">✏️</button>
-          <button className="btn-excluir-inline" onClick={() => onExcluir(colaborador.id)} title="Excluir">🗑️</button>
+          <button
+  className="btn-excluir-inline"
+  onClick={() => onExcluir(colaborador.id)}
+  title={colaborador.id === usuarioLogadoId ? "Você não pode excluir sua própria conta" : "Excluir"}
+  disabled={colaborador.id === usuarioLogadoId}
+>
+  🗑️
+</button>
         </div>
       </div>
     </div>
@@ -99,19 +106,26 @@ const ListaColaboradores = () => {
   };
 
   const excluirColaborador = async (id) => {
-    if (!window.confirm("Deseja realmente excluir este colaborador?")) return;
-    try {
-      await excluirUsuario(id);
-      if (id === getUsuarioLogadoId()) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return;
-      }
-      await carregarUsuarios();
-    } catch (erro) {
+  const idLogado = getUsuarioLogadoId();
+
+  if (id === idLogado) {
+    alert("Você não pode excluir sua própria conta.");
+    return;
+  }
+
+  if (!window.confirm("Deseja realmente excluir este colaborador?")) return;
+
+  try {
+    await excluirUsuario(id);
+    await carregarUsuarios();
+  } catch (erro) {
+    if (erro.response?.status === 403) {
+      alert("Você não pode excluir sua própria conta.");
+    } else {
       alert("Erro ao excluir colaborador!");
     }
-  };
+  }
+};
 
   const salvarAlteracoes = async () => {
     try {
@@ -191,17 +205,18 @@ const ListaColaboradores = () => {
           {colaboradoresPagina.length === 0 ? (
             <p style={{ padding: "1rem", opacity: 0.5 }}>Nenhum colaborador encontrado.</p>
           ) : (
-            colaboradoresPagina.map((colaborador) => (
-              <ColaboradorItem
-                key={colaborador.id}
-                colaborador={colaborador}
-                editando={colaboradorParaEditar === colaborador.id}
-                dadosEditados={dadosEditados}
-                onDadosChange={setDadosEditados}
-                onEditar={prepararEdicao}
-                onExcluir={excluirColaborador}
-                onSalvar={salvarAlteracoes}
-                onCancelar={cancelarEdicao}
+              colaboradoresPagina.map((colaborador) => (
+                <ColaboradorItem
+                  key={colaborador.id}
+                  colaborador={colaborador}
+                  usuarioLogadoId={getUsuarioLogadoId()}
+                  editando={colaboradorParaEditar === colaborador.id}
+                  dadosEditados={dadosEditados}
+                  onDadosChange={setDadosEditados}
+                  onEditar={prepararEdicao}
+                  onExcluir={excluirColaborador}
+                  onSalvar={salvarAlteracoes}
+                  onCancelar={cancelarEdicao}
               />
             ))
           )}

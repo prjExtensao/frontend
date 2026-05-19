@@ -162,10 +162,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    if (status === 401 || status === 403) {
+    const url = error.config?.url ?? "";
+
+    const ehBloqueioAutoExclusao = status === 403 && url.includes("/usuarios/") && error.config?.method === "delete";
+
+    if (status === 401 || (status === 403 && !ehBloqueioAutoExclusao)) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
+
     return Promise.reject(error);
   }
 );
