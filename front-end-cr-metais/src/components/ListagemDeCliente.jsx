@@ -10,6 +10,7 @@ import "tippy.js/themes/light.css";
 // Modais de Fornecedor
 import NovoFornecedorModal from "./NovoFornecedorModal";
 import EditarFornecedorModal from "./EditarFornecedorModal";
+import DetalheFornecedorModal from "./DetalheFornecedorModal";
 
 // Modais de Cliente
 import NovoClienteModal from "./NovoClienteModal";
@@ -25,6 +26,11 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditClosing, setIsEditClosing] = useState(false);
   const [fornecedorEditandoId, setFornecedorEditandoId] = useState(null);
+
+  // Modal de detalhes
+  const [isDetalheOpen, setIsDetalheOpen] = useState(false);
+  const [isDetalheClosing, setIsDetalheClosing] = useState(false);
+  const [fornecedorDetalheId, setFornecedorDetalheId] = useState(null);
 
   const carregarFornecedores = async () => {
     try {
@@ -43,7 +49,8 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
     carregarFornecedores();
   }, []);
 
-  async function excluirFornecedor(id) {
+  async function excluirFornecedor(e, id) {
+    e.stopPropagation();
     if (!window.confirm("Tem certeza que deseja excluir este fornecedor?")) return;
     try {
       const token = localStorage.getItem("token");
@@ -58,7 +65,8 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
     }
   }
 
-  function abrirEdicao(id) {
+  function abrirEdicao(e, id) {
+    e.stopPropagation();
     setFornecedorEditandoId(id);
     setIsEditModalOpen(true);
   }
@@ -80,13 +88,26 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
     }, 300);
   }
 
+  function abrirDetalhe(id) {
+    setFornecedorDetalheId(id);
+    setIsDetalheOpen(true);
+  }
+
+  function fecharDetalhe() {
+    setIsDetalheClosing(true);
+    setTimeout(() => {
+      setIsDetalheOpen(false);
+      setIsDetalheClosing(false);
+      setFornecedorDetalheId(null);
+    }, 300);
+  }
+
   const filtrados = fornecedores.filter((f) =>
     f.nome?.toLowerCase().includes(filtroNome.toLowerCase())
   );
 
   return (
     <>
-      {/* Botão de gatilho do modal controlado internamente pela listagem */}
       <div style={{ display: "none" }}>
         <button id="btn-cadastrar-fornecedor-trigger" onClick={() => setIsModalOpen(true)}></button>
       </div>
@@ -103,6 +124,12 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
         onClose={fecharEdicao}
         fornecedorId={fornecedorEditandoId}
         onSuccess={carregarFornecedores}
+      />
+      <DetalheFornecedorModal
+        isOpen={isDetalheOpen}
+        isClosing={isDetalheClosing}
+        onClose={fecharDetalhe}
+        fornecedorId={fornecedorDetalheId}
       />
 
       <div className={styles.listaClientesGrid}>
@@ -122,6 +149,8 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
               <div
                 key={f.idFornecedor}
                 className={`${styles.clienteLine} ${index % 2 === 0 ? styles.linhaPar : styles.linhaImpar}`}
+                onClick={() => abrirDetalhe(f.idFornecedor)}
+                style={{ cursor: "pointer" }}
               >
                 <div className={styles.clienteItem}>
                   <span className={styles.clienteId}>{f.idFornecedor}</span>
@@ -130,12 +159,18 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
                   <span className={styles.clienteTabela}>{f.tabelaPreco?.nomeTabela || "-"}</span>
                   <div className={styles.clienteEdicao}>
                     <Tippy content="Editar fornecedor" theme="light">
-                      <span className={`${styles.acao} ${styles.editar}`} onClick={() => abrirEdicao(f.idFornecedor)}>
+                      <span
+                        className={`${styles.acao} ${styles.editar}`}
+                        onClick={(e) => abrirEdicao(e, f.idFornecedor)}
+                      >
                         <FaEdit className={styles.editIcon} />
                       </span>
                     </Tippy>
                     <Tippy content="Excluir fornecedor" theme="light">
-                      <span className={`${styles.acao} ${styles.excluir}`} onClick={() => excluirFornecedor(f.idFornecedor)}>
+                      <span
+                        className={`${styles.acao} ${styles.excluir}`}
+                        onClick={(e) => excluirFornecedor(e, f.idFornecedor)}
+                      >
                         <FaTrashAlt className={styles.trashAlt} />
                       </span>
                     </Tippy>
@@ -213,7 +248,6 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
 
   return (
     <>
-      {/* Botão de gatilho do modal controlado internamente pela listagem */}
       <div style={{ display: "none" }}>
         <button id="btn-cadastrar-cliente-trigger" onClick={() => setIsModalOpen(true)}></button>
       </div>
@@ -282,7 +316,7 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
 // Componente principal com barra integrada
 // ─────────────────────────────────────────────
 export default function ListagemDeCliente() {
-  const [visao, setVisao] = useState("fornecedores"); // "fornecedores" | "clientes"
+  const [visao, setVisao] = useState("fornecedores");
   const [filtroNome, setFiltroNome] = useState("");
 
   useEffect(() => {
@@ -304,11 +338,7 @@ export default function ListagemDeCliente() {
 
   return (
     <div className={styles.listaClientesContainer}>
-      
-      {/* O Cabeçalho agora engloba os Títulos E as Ações na mesma linha horizontal */}
       <div className={styles.cabecalho}>
-        
-        {/* Lado Esquerdo: Textos */}
         <div className={styles.titulos}>
           <span className={styles.titulo}>
             {visao === "fornecedores" ? "Fornecedores" : "Clientes"}
@@ -320,10 +350,7 @@ export default function ListagemDeCliente() {
           </span>
         </div>
 
-        {/* Lado Direito: Ações (Pesquisa robusta + Botão Toggle + Botão Cadastrar) */}
         <div className={styles.cabecalhoLayoutNovo}>
-          
-          {/* 1. Barra de Busca Expandida */}
           <div className={styles.searchContainerEsquerda}>
             <div className={styles.searchWrapper}>
               <FaSearch className={styles.searchIcon} />
@@ -346,20 +373,16 @@ export default function ListagemDeCliente() {
             </div>
           </div>
 
-          {/* 2. Botão Único que Alterna de Texto */}
           <button className={styles.toggleBtnUnico} onClick={alternarVisao}>
             {visao === "fornecedores" ? "Clientes" : "Fornecedores"}
           </button>
 
-          {/* 3. Botão Amarelo Compacto */}
           <button className={styles.btnCadastrarAmarelo} onClick={handleCadastrarClick}>
             {visao === "fornecedores" ? "Cadastrar fornecedor" : "Cadastrar cliente"}
           </button>
-
         </div>
       </div>
 
-      {/* Conteúdo dinâmico da tabela */}
       <div className={styles.containerInfos}>
         {visao === "fornecedores" ? (
           <ListaFornecedores filtroNome={filtroNome} setFiltroNome={setFiltroNome} />

@@ -1,0 +1,306 @@
+/* ── Overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 24, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+ 
+.overlayIn {
+  animation: fadeIn 0.22s ease forwards;
+}
+.overlayOut {
+  animation: fadeOut 0.28s ease forwards;
+}
+ 
+/* ── Modal ── */
+.modal {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 620px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 25px 60px rgba(2, 6, 24, 0.18),
+    0 8px 20px rgba(2, 6, 24, 0.1);
+  overflow: hidden;
+}
+ 
+.modalIn {
+  animation: slideUp 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.modalOut {
+  animation: slideDown 0.24s ease forwards;
+}
+ 
+/* ── Header ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.75rem;
+  background: #020618;
+  border-bottom: 3px solid #facc15;
+}
+ 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+ 
+.iconBadge {
+  width: 44px;
+  height: 44px;
+  background: #facc15;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #020618;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+ 
+.headerLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin: 0 0 2px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+ 
+.headerTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+ 
+.closeBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #94a3b8;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+ 
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+ 
+/* ── Body ── */
+.body {
+  overflow-y: auto;
+  padding: 1.5rem 1.75rem;
+  flex: 1;
+}
+ 
+/* ── ID Badge ── */
+.idBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 1rem;
+}
+ 
+.idIcon {
+  font-size: 0.75rem;
+}
+ 
+/* ── Grid de InfoCards ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+ 
+/* ── InfoCard ── */
+.infoCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+ 
+.infoCard:hover {
+  border-color: #facc15;
+  box-shadow: 0 2px 10px rgba(250, 204, 21, 0.12);
+}
+ 
+.infoCardHighlight {
+  background: #fefce8;
+  border-color: #fde047;
+}
+ 
+.infoCardHighlight:hover {
+  border-color: #facc15;
+  box-shadow: 0 2px 12px rgba(250, 204, 21, 0.2);
+}
+ 
+/* Ocupa as 2 colunas da grid */
+.infoCardWide {
+  grid-column: 1 / -1;
+}
+ 
+.infoIcon {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+ 
+.infoCardHighlight .infoIcon {
+  color: #ca8a04;
+}
+ 
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+ 
+.infoLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+ 
+.infoValue {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  word-break: break-word;
+}
+ 
+.infoLink {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+  word-break: break-all;
+}
+ 
+.infoLink:hover {
+  text-decoration: underline;
+}
+ 
+/* ── Loading ── */
+.loadingWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+ 
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #facc15;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+ 
+/* ── Erro ── */
+.erroBox {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+}
+ 
+/* ── Footer ── */
+.footer {
+  padding: 1rem 1.75rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+ 
+.btnFechar {
+  padding: 9px 24px;
+  background: #020618;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+ 
+.btnFechar:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+ 
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(32px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@keyframes slideDown {
+  from { opacity: 1; transform: translateY(0)    scale(1);    }
+  to   { opacity: 0; transform: translateY(20px) scale(0.97); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  color: #4a5568; /* Um tom cinza escuro elegante */
+  margin: 1.5rem 0 0.8rem 0;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid #e2e8f0; /* Linha sutil divisória */
+  font-weight: 600;
+  grid-column: 1 / -1; /* Garante que cruze a tela toda se o wrapper usar grid */
+}
