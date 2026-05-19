@@ -256,3 +256,18 @@ h1 {
 .linhaImpar {
   background-color: #ffffff;
 }
+
+.estoqueHeader span {
+  cursor: pointer;
+  user-select: none;
+}
+
+.headerSortable {
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s;
+}
+
+.headerSortable:hover {
+  opacity: 0.8;
+}

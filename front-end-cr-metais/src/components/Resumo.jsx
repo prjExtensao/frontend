@@ -3,14 +3,63 @@ import { useState, useEffect } from "react";
 import { api } from "../services/resumoService";
 import { FaSearch } from "react-icons/fa";
 
-const EstoqueHeader = () => {
+// const EstoqueHeader = () => {
+//   return (
+//     <div className={styles.estoqueHeader}>
+//       <span className={styles.estoqueProduto}>Produto</span>
+//       <span className={styles.estoquePeso}>Peso (Kg)</span>
+//       <span className={styles.estoqueValor}>Valor Unitário (R$)</span>
+//       <span className={styles.estoqueTotal}>Total (R$)</span>
+//       <span className={styles.estoqueDestino}>Destino</span>
+//     </div>
+//   );
+// };
+
+const EstoqueHeader = ({ ordenarPor, ordenacao }) => {
+  const renderSeta = (campo) => {
+    if (ordenacao.campo !== campo) {
+      return "↕";
+    }
+
+    return ordenacao.direcao === "asc" ? "↑" : "↓";
+  };
+
   return (
     <div className={styles.estoqueHeader}>
-      <span className={styles.estoqueProduto}>Produto</span>
-      <span className={styles.estoquePeso}>Peso (Kg)</span>
-      <span className={styles.estoqueValor}>Valor Unitário (R$)</span>
-      <span className={styles.estoqueTotal}>Total (R$)</span>
-      <span className={styles.estoqueDestino}>Destino</span>
+      <span
+        className={styles.headerSortable}
+        onClick={() => ordenarPor("nome")}
+      >
+        Produto {renderSeta("nome")}
+      </span>
+
+      <span
+        className={styles.headerSortable}
+        onClick={() => ordenarPor("peso")}
+      >
+        Peso (Kg) {renderSeta("peso")}
+      </span>
+
+      <span
+        className={styles.headerSortable}
+        onClick={() => ordenarPor("valor")}
+      >
+        Valor Unitário (R$) {renderSeta("valor")}
+      </span>
+
+      <span
+        className={styles.headerSortable}
+        onClick={() => ordenarPor("total")}
+      >
+        Total (R$) {renderSeta("total")}
+      </span>
+
+      <span
+        className={styles.headerSortable}
+        onClick={() => ordenarPor("destino")}
+      >
+        Destino {renderSeta("destino")}
+      </span>
     </div>
   );
 };
@@ -63,6 +112,11 @@ const Resumo = () => {
   const [resumo, setResumo] = useState(null);
   const [busca, setBusca] = useState("");
 
+  const [ordenacao, setOrdenacao] = useState({
+    campo: "nome",
+    direcao: "asc",
+  });
+
   useEffect(() => {
     document.title = "CR Metais | Resumo";
   }, []);
@@ -84,11 +138,77 @@ const Resumo = () => {
   const termo = busca.toLowerCase().trim();
 
   // Preserva o índice original para manter as listras corretas após o filtro
+  // const produtosFiltrados = resumo.produtos
+  //   .map((produto, originalIndex) => ({ produto, originalIndex }))
+  //   .filter(({ produto }) =>
+  //     !termo || produto.nome?.toLowerCase().includes(termo)
+  //   );
+
   const produtosFiltrados = resumo.produtos
-    .map((produto, originalIndex) => ({ produto, originalIndex }))
-    .filter(({ produto }) =>
+  .filter(
+    (produto) =>
       !termo || produto.nome?.toLowerCase().includes(termo)
-    );
+  )
+  .sort((a, b) => {
+    const { campo, direcao } = ordenacao;
+
+    let valorA;
+    let valorB;
+
+    switch (campo) {
+      case "nome":
+        valorA = a.nome?.toLowerCase() || "";
+        valorB = b.nome?.toLowerCase() || "";
+        break;
+
+      case "peso":
+        valorA = a.peso;
+        valorB = b.peso;
+        break;
+
+      case "valor":
+        valorA = a.valor;
+        valorB = b.valor;
+        break;
+
+      case "total":
+        valorA = a.peso * a.valor;
+        valorB = b.peso * b.valor;
+        break;
+
+      case "destino":
+        valorA = a.destino?.toLowerCase() || "";
+        valorB = b.destino?.toLowerCase() || "";
+        break;
+
+      default:
+        return 0;
+    }
+
+    if (valorA < valorB) {
+      return direcao === "asc" ? -1 : 1;
+    }
+
+    if (valorA > valorB) {
+      return direcao === "asc" ? 1 : -1;
+    }
+
+    return 0;
+  });
+
+  // Ordenação  
+  const ordenarPor = (campo) => {
+    let direcao = "asc";
+
+    if (
+      ordenacao.campo === campo &&
+      ordenacao.direcao === "asc"
+    ) {
+      direcao = "desc";
+    }
+
+    setOrdenacao({ campo, direcao });
+  }; 
 
   return (
     <div className={styles.conteudo}>
@@ -122,15 +242,18 @@ const Resumo = () => {
           </div>
 
           <div className={styles.estoqueGrid}>
-            <EstoqueHeader />
+            <EstoqueHeader
+              ordenarPor={ordenarPor}
+              ordenacao={ordenacao}
+            />
 
             <div className={styles.estoqueLista}>
               {produtosFiltrados.length > 0 ? (
-                produtosFiltrados.map(({ produto, originalIndex }) => (
+                produtosFiltrados.map((produto, index) => (
                   <EstoqueItem
-                    key={originalIndex}
+                    key={index}
                     produto={produto}
-                    isEven={originalIndex % 2 === 0}
+                    isEven={index % 2 === 0}
                   />
                 ))
               ) : (
