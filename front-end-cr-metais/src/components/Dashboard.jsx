@@ -250,7 +250,7 @@ export default function Dashboard() {
                             },
                         ]}
                         width={chartWidth}
-                        height={400}
+                        height={300}
                     />
                 </div>
 
@@ -272,7 +272,7 @@ export default function Dashboard() {
                             },
                         ]}
                         width={chartWidth}
-                        height={400}
+                        height={300}
                     />
                 </div>
             </div>
