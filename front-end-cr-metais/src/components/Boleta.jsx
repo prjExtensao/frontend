@@ -35,6 +35,34 @@ const Boleta = () => {
     };
     buscarDadosIniciais();
   }, []);
+  
+  useEffect(() => {
+  const handleKeyDown = (event) => {
+    // if de atalho para adicionar compra (alt z)
+    if (event.altKey && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      adicionarItem();
+    }
+    
+    // if de atalho para limpar compra (alt x)
+    if (event.altKey && event.key.toLowerCase() === "x") {
+      event.preventDefault();
+      limparBoleta();
+    }
+
+    // if de atalho para confirmar compra (alt c)
+    if (event.altKey && event.key.toLowerCase() === "c") {
+      event.preventDefault();
+      confirmarPagamento();
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [itensBoleta, clienteSelecionadoId]);
 
   useEffect(() => {
     const buscarEntidades = async () => {
