@@ -18,15 +18,18 @@
 }
 
 .lista_cliente {
-    width: 250px;
-    height: 42px;
+    width: 500px;
+    height: 53px;
     border-radius: 12px;
-    background-color: #d3d3d3;
+    background-color: white;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
     padding: 0 10px;
+    border: 1px solid #b6b6b6;
     box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    border: 1.5px solid #e2e8f0;
 }
 
 .lista_cliente span {
@@ -37,29 +40,37 @@
 .seletor_cliente {
     width: 100%;
     height: 28px;
-    border: 1px solid #b6b6b6;
-    border-radius: 8px;
+    color: #94a3b8;
+    /* border-radius: 8px; */
+    border: none;
     background: #fff;
-    color: #3f3f3f;
+    outline: none;
+    height: 2rem;
 }
 
-.card_nota {
-    border: 1px solid #c6c6c6;
-    background: #ffffff;
-}
+/* .card_nota { */
+    /* border: 1px solid #c6c6c6; */
+    /* background: #ffffff; */
+/* } */
 
 .cabecalho_card {
-    background-color: #3f3f3f;
-    padding: 8px;
+    /* background-color: #3f3f3f; */
+    /* padding: 8px; */
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.btns_cabecalho {
+    display: flex;
+    gap: 8px;
+}
+
 .cabecalho_card h2 {
     margin: 0;
     font-size: 25px;
-    color: #facc15;
+    /* color: #facc15; */
+    color: #020618;
     font-weight: 600;
 }
 .texto_copiar {
@@ -69,29 +80,56 @@
 
 }
 .botao_adicionar {
-    background-color: transparent !important;
+    /* background-color: transparent !important; */
+    width: 250px;
     border: 1px solid #9c9c9c !important;
     color: #d6d6d6 !important;
-    border-radius: 30px !important;
+    /* border-radius: 30px !important; */
     font-size: 12px !important;
     font-weight: 500;
     padding: 4px 14px !important;
+    background-color: #020618;
 }
 
-.botao_adicionar:hover {
+/* .botao_adicionar:hover {
     border-color: #facc15 !important;
-}
+} */
 
 .rolagem_tabela {
-    max-height: 510px;
+    max-height: 610px;
     overflow-y: auto;
+    /* padding-top: 32px; */
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.separacao {
+    height: 32px;
 }
 
 .tabela {
     width: 100%;
-    border-collapse: collapse;
     min-width: 760px;
 }
+
+.tabela {
+    border-collapse: separate;
+    border-radius: 1rem;
+    background-color: #020618;
+    border-spacing: 0;
+    /* background-color: red; */
+    overflow: auto;
+    height: 300px !important;
+}
+
+
+
+th {
+    background-color: #020618 !important;
+    position: fixed;
+}
+
 
 .tabela th,
 .tabela td {
@@ -100,11 +138,14 @@
     text-align: left;
     padding: 10px 16px;
     border-bottom: 1px solid #d8d8d8;
+    /* background-color: transparent !important; */
+    background-color: white;
 }
 
 .tabela th {
-    background: #efefef;
-    color: #5f5f5f;
+    /* background: #020618; */
+    background-color: transparent;
+    color: white;
     font-weight: 600;
     position: sticky;
     top: 0;
@@ -124,12 +165,15 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    border: 1px solid #cdcdcd;
+    background-color: whtie;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .caixa_info,
 .card_total {
-    background-color: #e5e5e5;
-    border: 1px solid #cdcdcd;
+    /* background-color: #e5e5e5; */
+    /* border: 1px solid #cdcdcd; */
     border-radius: 12px;
     padding: 10px;
     width: 100%;
@@ -150,8 +194,10 @@
 }
 
 .linha_info {
-    background: #5e5e5e;
-    border-radius: 4px;
+    /* background: #5e5e5e; */
+    /* border-radius: 4px; */
+    color: #020618;
+    border-bottom: #020618 solid 1px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -159,31 +205,32 @@
 }
 
 .linha_info span {
-    color: #e2e2e2;
-    font-size: 25px;
+    color: #020618;
+    font-size: 16px;
     font-weight: 600;
 }
 
 .linha_info strong {
-    color: #facc15;
+    /* color: #facc15; */
     font-size: 25px;
     font-weight: 700;
 }
 
 .botao_toggle_info {
-    background: #4f4f4f !important;
+    background: #020618 !important;
     border: 1px solid #6f6f6f !important;
-    color: #facc15 !important;
-    font-size: 22px !important;
+    /* color: #facc15 !important; */
+    font-size: 18px !important;
     font-weight: 700;
     border-radius: 6px !important;
     padding: 4px 10px !important;
-    min-width: 140px;
+    /* min-width: 20px; */
+    width: 150px;
 }
 
-.botao_toggle_info:hover {
+/* .botao_toggle_info:hover {
     border-color: #facc15 !important;
-}
+} */
 
 .caixa_acoes {
     padding-bottom: 12px;
@@ -197,10 +244,10 @@
 
 .botoes_acao button {
     width: 100%;
-    background-color: #5b5b5b !important;
+    background-color: #020618 !important;
     color: #ffffff !important;
     border: 1px solid #6f6f6f !important;
-    border-radius: 4px !important;
+    border-radius: 0.5rem !important;
     font-size: 15px;
     font-weight: 600;
     padding: 8px 10px !important;
@@ -208,6 +255,13 @@
     justify-content: center;
     align-items: center;
     gap: 8px;
+}
+
+button:hover {
+    background-color: #f8fafc !important;
+    border: solid #020618 !important;
+    color: #020618 !important;
+    border-color: #020618 !important;
 }
 
 .botao_confirmar {
@@ -243,6 +297,12 @@
 
 .card_total {
     padding-top: 8px;
+    border-radius: 0.5rem;
+    background-color: #020618;
+}
+
+.card_total p, .divisor_total, .detalhes_total span {
+    color: #FACC15 !important;
 }
 
 .label_total {
@@ -283,7 +343,9 @@
     font-weight: 500;
 }
 .pagina{
-    background-color: #f5f5f5;
+    /* background-color: #f5f5f5; */
+    /* background-color: #F8FAFC; */
+    background-color: transparent;
 }
 
 @media (max-width: 1180px) {
@@ -322,10 +384,29 @@
 }
 
 .select_produto{
-    background-color: #ededed;
+    background-color: white;
     color: #3f3f3f;
+    height: 3rem;
+    border: none;
+    /* border-bottom: 1px solid #b6b6b6; */
+    /* border-radius: 12px; */
+    padding: 0 10px;
+    outline: none;
 }
 
 .inputItem{
     color: #3f3f3f;
+    background-color: white;
+    /* border: solid gainsboro thin; */
+    border-radius: 0;
+    outline: none;
+}
+
+
+.trashAlt {
+    display: flex;
+    align-self: center;
+    justify-self: center;
+    height: 1.5rem;
+    width: 1.5rem;
 }

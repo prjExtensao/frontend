@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../styles/BoletaStyle.css";
 import api from "../services/apiClient";
+import { FaTrashAlt, FaEdit, FaSearch } from "react-icons/fa";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
+import "tippy.js/themes/light.css";
 
 const Boleta = () => {
   const [clientes, setClientes] = useState([]);
@@ -35,34 +39,34 @@ const Boleta = () => {
     };
     buscarDadosIniciais();
   }, []);
-  
+
   useEffect(() => {
-  const handleKeyDown = (event) => {
-    // if de atalho para adicionar compra (alt z)
-    if (event.altKey && event.key.toLowerCase() === "z") {
-      event.preventDefault();
-      adicionarItem();
-    }
-    
-    // if de atalho para limpar compra (alt x)
-    if (event.altKey && event.key.toLowerCase() === "x") {
-      event.preventDefault();
-      limparBoleta();
-    }
+    const handleKeyDown = (event) => {
+      // if de atalho para adicionar compra (alt z)
+      if (event.altKey && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        adicionarItem();
+      }
 
-    // if de atalho para confirmar compra (alt c)
-    if (event.altKey && event.key.toLowerCase() === "c") {
-      event.preventDefault();
-      confirmarPagamento();
-    }
-  };
+      // if de atalho para limpar compra (alt x)
+      if (event.altKey && event.key.toLowerCase() === "x") {
+        event.preventDefault();
+        limparBoleta();
+      }
 
-  window.addEventListener("keydown", handleKeyDown);
+      // if de atalho para confirmar compra (alt c)
+      if (event.altKey && event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        confirmarPagamento();
+      }
+    };
 
-  return () => {
-    window.removeEventListener("keydown", handleKeyDown);
-  };
-}, [itensBoleta, clienteSelecionadoId]);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [itensBoleta, clienteSelecionadoId]);
 
   useEffect(() => {
     const buscarEntidades = async () => {
@@ -188,49 +192,49 @@ const Boleta = () => {
   };
 
   const gerarNotaFiscal = async () => {
-  try {
-    if (!clienteSelecionadoId) {
-      alert("Selecione um cliente/fornecedor.");
-      return;
+    try {
+      if (!clienteSelecionadoId) {
+        alert("Selecione um cliente/fornecedor.");
+        return;
+      }
+
+      if (itensBoleta.length === 0) {
+        alert("Adicione itens na boleta.");
+        return;
+      }
+
+      const payload = {
+        idFornecedor: Number(clienteSelecionadoId),
+        tipoNota,
+        classeNota,
+        itens: itensBoleta.map(item => ({
+          produtoId: Number(item.produtoId),
+          peso: Number(item.peso),
+          valorUnitario: Number(item.valorUnitario),
+          total: Number(item.total),
+          bags: Number(item.bags)
+        }))
+      };
+
+      const resJava = await api.post("/nota-fiscal", payload);
+
+      await fetch("/nf/gerar-nf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(resJava.data)
+      });
+
+      console.log("JSON FINAL:", resJava.data);
+
+      alert("NF gerada! Veja o terminal do Python");
+
+    } catch (erro) {
+      console.error("Erro ao gerar NF:", erro);
+      alert("Erro ao gerar nota fiscal");
     }
-
-    if (itensBoleta.length === 0) {
-      alert("Adicione itens na boleta.");
-      return;
-    }
-
-    const payload = {
-      idFornecedor: Number(clienteSelecionadoId),
-      tipoNota,
-      classeNota,
-      itens: itensBoleta.map(item => ({
-        produtoId: Number(item.produtoId),
-        peso: Number(item.peso),
-        valorUnitario: Number(item.valorUnitario),
-        total: Number(item.total),
-        bags: Number(item.bags)
-      }))
-    };
-
-    const resJava = await api.post("/nota-fiscal", payload);
-
-    await fetch("/nf/gerar-nf", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(resJava.data)
-    });
-
-    console.log("JSON FINAL:", resJava.data);
-
-    alert("NF gerada! Veja o terminal do Python");
-
-  } catch (erro) {
-    console.error("Erro ao gerar NF:", erro);
-    alert("Erro ao gerar nota fiscal");
-  }
-};
+  };
 
   const clienteSelecionado = clientes.find(c => String(c.id || c.idCliente || c.idFornecedor) === clienteSelecionadoId);
   const nomeCliente = clienteSelecionado ? (clienteSelecionado.nome || clienteSelecionado.razaoSocial) : "-";
@@ -243,35 +247,38 @@ const Boleta = () => {
   return (
     <div className="pagina">
       <div className="conteudo_principal">
-        <div className="lista_cliente">
-          {carregando ? <span>Carregando...</span> : (
-            <select
-              className="seletor_cliente"
-              value={clienteSelecionadoId}
-              onChange={(e) => setClienteSelecionadoId(e.target.value)}
-            >
-              <option value="" disabled>Selecione o {tipoNota === "ENTRADA" ? "Fornecedor" : "Cliente"}</option>
-              {clientes.map(c => (
-                <option key={c.id || c.idCliente || c.idFornecedor} value={c.id || c.idCliente || c.idFornecedor}>
-                  {c.nome || c.razaoSocial}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
 
         <div className="card_nota">
           <div className="cabecalho_card">
             <h2>NOTA DE PAGAMENTO</h2>
-            <div>
+            <div className="btns_cabecalho">
+              <div className="lista_cliente">
+                {carregando ? <span>Carregando...</span> : (
+                  <select
+                    className="seletor_cliente"
+                    value={clienteSelecionadoId}
+                    onChange={(e) => setClienteSelecionadoId(e.target.value)}
+                  >
+                    <option value="" disabled>Selecione o {tipoNota === "ENTRADA" ? "Fornecedor" : "Cliente"}</option>
+                    {clientes.map(c => (
+                      <option key={c.id || c.idCliente || c.idFornecedor} value={c.id || c.idCliente || c.idFornecedor}>
+                        {c.nome || c.razaoSocial}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
               <button type="button" className="botao_adicionar" onClick={adicionarItem}>ADICIONAR PRODUTO</button>
               <button type="button" className="botao_adicionar" onClick={limparBoleta} disabled={itensBoleta.length === 0}>REMOVER TODOS</button>
             </div>
           </div>
 
+          <div className="separacao"></div>
+
           <div className="rolagem_tabela">
             <table className="tabela">
-              <thead>
+              <thead className="cabecalho_tabela">
                 <tr>
                   <th>NUM</th><th>Produto</th><th>Peso (Kg)</th><th>Valor</th><th>Total</th><th>Qtd. Bags</th><th>Ações</th>
                 </tr>
@@ -296,15 +303,21 @@ const Boleta = () => {
                         </select>
                       </td>
                       <td>
-                        <input type="number" min="0" step="0.01" className="inputItem" value={item.peso} onChange={(e) => atualizarItem(item.idLinha, "peso", e.target.value)} />
+                        <input placeholder="Inserir valor" type="number" min="0" step="0.01" className="inputItem" value={item.peso} onChange={(e) => atualizarItem(item.idLinha, "peso", e.target.value)} />
                       </td>
                       <td>{formatarMoeda(item.valorUnitario)}</td>
                       <td>{formatarMoeda(item.total)}</td>
                       <td>
-                        <input type="number" min="0" step="1" className="inputItem" value={item.bags} onChange={(e) => atualizarItem(item.idLinha, "bags", e.target.value)} />
+                        <input placeholder="Informar Qtd. Bags" type="number" min="0" step="1" className="inputItem" value={item.bags} onChange={(e) => atualizarItem(item.idLinha, "bags", e.target.value)} />
                       </td>
                       <td>
-                        <button type="button" onClick={() => removerItem(item.idLinha)}>Excluir</button>
+                        <Tippy content="Excluir fornecedor" theme="light">
+                          <div type="button" onClick={() => removerItem(item.idLinha)}>
+                            <FaTrashAlt className="trashAlt" />
+                          </div>
+                        </Tippy>
+
+
                       </td>
                     </tr>
                   ))
@@ -333,6 +346,18 @@ const Boleta = () => {
         </div>
 
         <div className="caixa_info caixa_acoes">
+          
+          <div className="card_total">
+            <p className="label_total">Valor Total</p>
+            <p className="valor_total">{formatarMoeda(resumo.total)}</p>
+            <div className="divisor_total" />
+            <div className="detalhes_total">
+              <span>{itensBoleta.length} produto(s)</span>
+              <span>{resumo.bags} bag(s)</span>
+              <span>{resumo.peso.toFixed(2)} Kg</span>
+            </div>
+          </div>
+
           <p className="titulo_lateral">Ações da Nota</p>
           <div className="botoes_acao">
             <button
@@ -351,16 +376,7 @@ const Boleta = () => {
           </div>
         </div>
 
-        <div className="card_total">
-          <p className="label_total">Valor Total</p>
-          <p className="valor_total">{formatarMoeda(resumo.total)}</p>
-          <div className="divisor_total" />
-          <div className="detalhes_total">
-            <span>{itensBoleta.length} produto(s)</span>
-            <span>{resumo.bags} bag(s)</span>
-            <span>{resumo.peso.toFixed(2)} Kg</span>
-          </div>
-        </div>
+
       </aside>
     </div>
   );
