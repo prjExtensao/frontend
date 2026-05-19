@@ -263,104 +263,113 @@ function TabelaVendaView({ usuarioComum, onIrParaCompra }) {
         />
       )}
 
-      <div className="card">
-        <div className="headerYellow">
-          PRECOS VENDA - {tabela}
-          {versaoAtual && <span className="versaoBadge">v{versaoAtual}</span>}
+      <div className="headerYellow">
+        PRECOS VENDA - {tabela}
+        {versaoAtual && <span className="versaoBadge">v{versaoAtual}</span>}
+      </div>
+
+      <div className="conteudo">
+        <div className="card">
+
+          <div className="body">
+            <div className="cabecalhoTabela">
+              <div className="nomeProduto">Produto</div>
+              {datas.map((d, idx) => (
+                <th key={d} className="th" /* style={idx === 0 ? { borderBottom: "2px solid #FACC15" } : {}} */>
+                  {d}
+                </th>
+              ))}
+              {/* <div className="nomeProduto">Produto</div> */}
+            </div>
+            <div className="tableWrap">
+              {loading && <div className="status">Carregando...</div>}
+              {!loading && erro && <div className="status error">{erro}</div>}
+              {!loading && sucesso && <div className="status" style={{ color: "#16a34a" }}>{sucesso}</div>}
+
+              {!loading && (
+                <table className="table">
+                  <thead>
+
+                  </thead>
+                  <tbody>
+                    {produtos.map((nome, i) => (
+                      <tr key={nome} className="trHover" style={{ background: i % 2 === 0 ? "#ffffff" : "#f4f4f5" }}>
+                        <td className="td tdLeft">{nome}</td>
+                        {datas.map((d, idx) => {
+                          const current = valueMap.get(`${nome}__${d}`) ?? null;
+                          const prevDate = datas[idx + 1];
+                          const prev = prevDate ? (valueMap.get(`${nome}__${prevDate}`) ?? null) : null;
+                          const trendClass = !usuarioComum && prevDate ? getTrendClass(current, prev) : "";
+                          const isEditavel = idx === 0 && !usuarioComum;
+                          const valorEdit = edits[nome];
+                          const displayValue = valorEdit !== undefined ? valorEdit : formatBRL(current);
+                          return (
+                            <td key={d} className={`td ${trendClass}`} /*style={idx === 0 ? { background: "rgba(250,204,21,0.04)" } : {}}*/>
+                              {isEditavel ? (
+                                <input
+                                  className={`cellInput ${valorEdit !== undefined ? "cellInputDirty" : ""}`}
+                                  value={displayValue}
+                                  onChange={(e) => handleCellChange(nome, e.target.value)}
+                                  onFocus={(e) => e.target.select()}
+                                  onBlur={(e) => handleCellBlur(nome, e.target.value)}
+                                />
+                              ) : displayValue}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+
+          </div>
         </div>
 
-        <div className="body">
-          <div className="tableWrap">
-            {loading && <div className="status">Carregando...</div>}
-            {!loading && erro && <div className="status error">{erro}</div>}
-            {!loading && sucesso && <div className="status" style={{ color: "#16a34a" }}>{sucesso}</div>}
+        <div className="side">
+          <div className="sideLabel">Selecione a tabela:</div>
+          <select className="select" value={tabela} onChange={(e) => setTabela(e.target.value)} disabled={loading}>
+            {tabelas.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
 
-            {!loading && (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th className="th thLeft">Produto</th>
-                    {datas.map((d, idx) => (
-                      <th key={d} className="th" /* style={idx === 0 ? { borderBottom: "2px solid #FACC15" } : {}} */>
-                        {d}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {produtos.map((nome, i) => (
-                    <tr key={nome} className="trHover" style={{ background: i % 2 === 0 ? "#ffffff" : "#f4f4f5" }}>
-                      <td className="td tdLeft">{nome}</td>
-                      {datas.map((d, idx) => {
-                        const current = valueMap.get(`${nome}__${d}`) ?? null;
-                        const prevDate = datas[idx + 1];
-                        const prev = prevDate ? (valueMap.get(`${nome}__${prevDate}`) ?? null) : null;
-                        const trendClass = !usuarioComum && prevDate ? getTrendClass(current, prev) : "";
-                        const isEditavel = idx === 0 && !usuarioComum;
-                        const valorEdit = edits[nome];
-                        const displayValue = valorEdit !== undefined ? valorEdit : formatBRL(current);
-                        return (
-                          <td key={d} className={`td ${trendClass}`} /*style={idx === 0 ? { background: "rgba(250,204,21,0.04)" } : {}}*/>
-                            {isEditavel ? (
-                              <input
-                                className={`cellInput ${valorEdit !== undefined ? "cellInputDirty" : ""}`}
-                                value={displayValue}
-                                onChange={(e) => handleCellChange(nome, e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                onBlur={(e) => handleCellBlur(nome, e.target.value)}
-                              />
-                            ) : displayValue}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+          {!usuarioComum && (
+            <button className="btnNovaTabela" onClick={() => setShowModal(true)} disabled={loading}>
+              + Nova tabela
+            </button>
+          )}
+
+          <div className="hint">
+            {loading ? "Atualizando..." : `${produtos.length} produto(s) · ${datas.length} versao(oes)`}
           </div>
 
-          <div className="side">
-            <div className="sideLabel">Selecione a tabela:</div>
-            <select className="select" value={tabela} onChange={(e) => setTabela(e.target.value)} disabled={loading}>
-              {tabelas.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-
-            {!usuarioComum && (
-              <button className="btnNovaTabela" onClick={() => setShowModal(true)} disabled={loading}>
-                + Nova tabela
+          {!usuarioComum && (
+            <>
+              <button
+                className={`btnSalvar ${temEdicoes ? "btnSalvarAtivo" : ""}`}
+                onClick={handleSalvar}
+                disabled={salvando || loading || !temEdicoes}
+              >
+                {salvando ? "Salvando..." : "Salvar precos de hoje"}
               </button>
-            )}
-
-            <div className="hint">
-              {loading ? "Atualizando..." : `${produtos.length} produto(s) · ${datas.length} versao(oes)`}
-            </div>
-
-            {!usuarioComum && (
-              <>
-                <button
-                  className={`btnSalvar ${temEdicoes ? "btnSalvarAtivo" : ""}`}
-                  onClick={handleSalvar}
-                  disabled={salvando || loading || !temEdicoes}
-                >
-                  {salvando ? "Salvando..." : "Salvar precos de hoje"}
-                </button>
-                {temEdicoes && <div className="hint hintWarning">{qtdEdicoes} preco(s) alterado(s)</div>}
-                <button className="btnCancelar" onClick={() => setEdits({})} disabled={!temEdicoes || salvando}>
-                  Cancelar edicoes
-                </button>
-              </>
-            )}
-
-            {/* Botão para ir para Tabelas Cliente */}
-            <div style={{ marginTop: "auto", paddingTop: "16px", borderTop: "1px solid gainsboro" }}>
-              <button className="btnCompra" onClick={onIrParaCompra}>
-                Tabelas Cliente
+              {temEdicoes && <div className="hint hintWarning">{qtdEdicoes} preco(s) alterado(s)</div>}
+              <button className="btnCancelar" onClick={() => setEdits({})} disabled={!temEdicoes || salvando}>
+                Cancelar edicoes
               </button>
-            </div>
+            </>
+          )}
+
+          {/* Botão para ir para Tabelas Cliente */}
+          <div style={{ marginTop: "auto", paddingTop: "16px", borderTop: "1px solid gainsboro" }}>
+            <button className="btnCompra" onClick={onIrParaCompra}>
+              Tabelas Cliente
+            </button>
           </div>
         </div>
       </div>
+
     </div>
+
   );
 }

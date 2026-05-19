@@ -5,17 +5,43 @@
   justify-content: center;
   /* background: #ffffff; */
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  gap: 32px;
 
-}
-
-.card {
   width: calc(100% - 96px);
   border: 1px solid gainsboro;
-  border-radius: 6px;
+  border-radius: 1rem;
   overflow: hidden;
   /* background: #fff; */
   box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
   margin-top: 32px;
+  flex-direction: column;
+  background-color: white;
+  align-self: center;
+  justify-self: center;
+  padding-bottom: 32px;
+  overflow: hidden;
+}
+
+.conteudo {
+  display: flex;
+  /* border: solid red; */
+  justify-content: center;
+  justify-self: center;
+  align-self: center;
+  gap: 50px;
+  /* border: solid red; */
+  width: calc(100% - 64px);
+  height: calc(100dvh - 280px);
+}
+
+.card {
+  width: 80%;
+  /* border: 1px solid gainsboro; */
+  /* border-radius: 1rem; */
+  /* overflow: hidden; */
+  /* background: #fff; */
+  /* box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1); */
+  /* margin-top: 32px; */
 }
 
 .headerYellow {
@@ -31,10 +57,13 @@
 /* minmax(0,1fr) evita "vazios" e overflow bugado */
 .body {
   display: flex;
+  flex-direction: column;
   /* grid-template-columns: minmax(0, 1fr) 280px; */
   justify-content: space-between;
-  gap: 18px;
-  padding: 16px;
+  height: calc(100dvh - 280px);
+  /* gap: 18px; */
+  /* padding: 16px; */
+  /* width: 80%; */
   /* align-items: start; */
   /* width: 100%; */
 }
@@ -43,7 +72,7 @@
 .tableWrap {
   position: relative;
   border: 1px solid #e6e6e6;
-  border-radius: 1rem;
+  border-radius: 0 0 1rem 1rem;
 
   overflow-x: auto;
   overflow-y: auto;
@@ -51,7 +80,7 @@
   max-height: 70vh;
   -webkit-overflow-scrolling: touch;
   color: #020618;
-  width: 80%;
+  width: 100%;
 }
 
 /* status */
@@ -78,7 +107,7 @@
 
 /* ====== HEADER ====== */
 .th {
-  background: #020618;
+  background: transparent;
   color: #ffffff;
   /* padding: 10px 12px; */
   height: 48px;
@@ -90,6 +119,11 @@
   top: 0;
   font-family: "IBM Plex Sans";
   z-index: 3;
+  /* border: solid red; */
+  width: 24%;
+  justify-content: center;
+  align-items: center;
+  align-items: center;
 }
 
 /* primeira coluna sticky */
@@ -251,6 +285,9 @@
   transition: border-color 0.15s, background 0.15s;
   padding: 2px 4px;
   border-radius: 2px;
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 .cellInput:focus {
@@ -700,4 +737,23 @@
 
 tbody {
   background-color: #fef9c2 !important;
+}
+
+.cabecalhoTabela {
+  display: flex;
+  background: #020618;
+  color: white !important;
+  font-weight: 700;
+  text-align: center;
+  /* letter-spacing: 0.4px; */
+  font-size: 20px;
+  width: 100%;
+  border-radius: 1rem 1rem 0 0;
+  /* padding: 1dvh; */
+  justify-content: space-between;
+}
+
+.nomeProduto {
+  color: white;
+  width: 220px;
 }

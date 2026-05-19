@@ -17,6 +17,9 @@
   align-items: start;
   margin: 0;
   padding: 0; /* Removido para alinhar com os botões */
+  height: 110px;
+  /* border: solid red; */
+  justify-content: space-around;
   max-width: 50%; /* Evita que o texto empurre os botões para baixo */
 }
 
@@ -366,7 +369,10 @@ input {
   position: relative;
   display: flex;
   align-items: center;
-  width: 100%; /* Ocupa todo o container elástico */
+  width: 300px;
+  flex-shrink: 0;
+  /* border: solid red; */
+  height: 53px;
 }
 
 .searchIcon {
@@ -379,16 +385,17 @@ input {
 
 .searchInput {
   width: 100%;
-  padding: 10px 16px 10px 42px;
-  height: 42px !important;
+  padding: 8px 32px 8px 48px;
+  height: 100% !important;
   border: 1.5px solid #e2e8f0;
-  border-radius: 0.75rem;
+  border-radius: 0.9rem;
+  background-color: #f8fafc;
   background-color: white;
   color: #020618;
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .searchInput::placeholder {
@@ -402,38 +409,27 @@ input {
 }
 
 .searchClear {
-  position: absolute !important;
-  right: 10px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  /* background-color: red !important !important; */
-  width: 18px !important;
-  height: 18px !important;
-  background: #e2e8f0 !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: #64748b !important;
-  font-size: 0.65rem !important;
-  line-height: 1 !important;
-  border-radius: 50% !important;
-  padding: 0 !important;
-  transition: background-color 0.2s, color 0.2s !important;
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #e2e8f0;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.65rem;
+  line-height: 1;
+  border-radius: 50%;
+  padding: 0;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .searchClear:hover {
   background-color: #cbd5e1;
   color: #020618;
-}
-
-.toggleWrapper {
-  display: flex;
-  gap: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1.5px solid #d1d5db;
-  width: fit-content;
-  align-self: flex-end;
 }
  
 /* Botão individual do toggle */
@@ -627,9 +623,9 @@ input {
 }
 
 /* Modifique ou adicione esta classe para a barra amarela de cadastro */
-.btnCadastrarAmarelo {
+/* .btnCadastrarAmarelo {
   height: 42px;
-  width: auto !important; /* Remove o esticamento de 100% */
+  width: auto !important; /* Remove o esticamento de 100%
   padding: 0 20px;
   background-color: #facc15;
   color: #020618;
@@ -641,11 +637,11 @@ input {
   transition: all 0.2s ease;
   text-align: center;
   white-space: nowrap;
-  margin-bottom: 0 !important; /* Remove a quebra de margem inferior */
+  margin-bottom: 0 !important; /* Remove a quebra de margem inferior
   display: flex;
   align-items: center;
   justify-content: center;
-}
+} */
 
 .btnCadastrarAmarelo:hover {
   background-color: #e2b60d;
@@ -665,9 +661,12 @@ input {
 /* Alinha a barra de pesquisa à esquerda */
 .searchContainerEsquerda {
   display: flex;
-  flex: 1; /* Faz a pesquisa crescer */
+  /* flex: 1; Faz a pesquisa crescer */
   justify-content: flex-end;
-  max-width: 450px; /* Define um limite máximo elegante para a pesquisa */
+  /* max-width: 450px; /* Define um limite máximo elegante para a pesquisa */
+  /* width: 100% !important+; */
+  /* width: 50px !important; */
+  /* background-color: red; */
 }
 
 .cabecalho {
@@ -678,7 +677,7 @@ input {
   padding: 2rem 0 1rem 0; /* Unifica o padding superior */
 }
 
-.toggleBtnUnico {
+/* .toggleBtnUnico {
   display: flex;
   height: 42px;
   padding: 0 20px;
@@ -693,7 +692,7 @@ input {
   transition: all 0.2s ease;
   justify-content: center;
   align-items: center;
-}
+} */
 
 .toggleBtnUnico:hover {
   background-color: #1e293b;
