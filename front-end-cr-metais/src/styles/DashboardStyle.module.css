@@ -27,7 +27,7 @@ body{
 .date_filter {
   display: flex;
   gap: 1rem;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   align-items: flex-start;
   padding: 1rem;
   background-color: #f9f9f9;

@@ -69,7 +69,7 @@ export default function Dashboard() {
 
         handleResize();
         window.addEventListener('resize', handleResize);
-        
+
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
@@ -101,7 +101,7 @@ export default function Dashboard() {
             setPesoTotal(resEstoque.data);
             setTotalVendas(resVendas.data);
             setTotalCompras(resCompras.data);
-            
+
             const produtosFormatados = normalizarLista(dadosProdutos)
                 .map((item) => ({
                     categoria:
@@ -160,36 +160,7 @@ export default function Dashboard() {
     return (
         <div className={styles.container_dash}>
             <div className={styles.container_kpi}>
-                <div className={styles.date_filter}>
-                    <div>
-                        <p className={styles.tit_data}>Data inicial</p>
-                        <input
-                            className={styles.input}
-                            type="date"
-                            value={dataInicio}
-                            onChange={(event) => setDataInicio(event.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <p className={styles.tit_data}>Data final</p>
-                        <input
-                            className={styles.input}
-                            type="date"
-                            value={dataFim}
-                            onChange={(event) => setDataFim(event.target.value)}
-                        />
-                    </div>
-                    <div className={styles.search_button_container}>
-                        <button
-                            className={`${styles.input} ${styles.search_button}`}
-                            type="button"
-                            onClick={aoPesquisar}
-                            disabled={carregandoGraficos}
-                        >
-                            Pesquisar
-                        </button>
-                    </div>
-                </div>
+
                 <div className={styles.cards_kpi}>
                     <div className={styles.card_kpi}>
                         <p className={styles.titulo_kpi}>Peso total:</p>
@@ -222,6 +193,39 @@ export default function Dashboard() {
                                 {carregandoGraficos ? '...' : formatarMoeda(totalCompras)}
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                <div className={styles.date_filter}>
+
+                    <div className={styles.search_button_container}>
+                        <button
+                            className={`${styles.input} ${styles.search_button}`}
+                            type="button"
+                            onClick={aoPesquisar}
+                            disabled={carregandoGraficos}
+                        >
+                            Pesquisar
+                        </button>
+                    </div>
+
+                    <div>
+                        <p className={styles.tit_data}>Data inicial</p>
+                        <input
+                            className={styles.input}
+                            type="date"
+                            value={dataInicio}
+                            onChange={(event) => setDataInicio(event.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <p className={styles.tit_data}>Data final</p>
+                        <input
+                            className={styles.input}
+                            type="date"
+                            value={dataFim}
+                            onChange={(event) => setDataFim(event.target.value)}
+                        />
                     </div>
                 </div>
             </div>

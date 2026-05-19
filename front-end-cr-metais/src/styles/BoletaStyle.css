@@ -96,7 +96,7 @@
 } */
 
 .rolagem_tabela {
-    max-height: 610px;
+    max-height: 585px;
     overflow-y: auto;
     /* padding-top: 32px; */
     background-color: #f8fafc;
@@ -120,7 +120,7 @@
     border-spacing: 0;
     /* background-color: red; */
     overflow: auto;
-    height: 300px !important;
+    height: 585px !important;
 }
 
 
@@ -212,7 +212,7 @@ th {
 
 .linha_info strong {
     /* color: #facc15; */
-    font-size: 25px;
+    font-size: 16px;
     font-weight: 700;
 }
 
