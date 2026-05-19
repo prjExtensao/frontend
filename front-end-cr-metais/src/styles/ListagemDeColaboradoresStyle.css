@@ -14,7 +14,7 @@ body {
   padding: 2rem;
   width: 100%;
   align-items: flex-start;
-  background-color: #f5f6fa;
+  background-color: transparent;
 }
 
 .lista-colaboradores-container {
