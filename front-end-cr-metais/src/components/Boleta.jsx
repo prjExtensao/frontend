@@ -280,7 +280,7 @@ const Boleta = () => {
             <table className="tabela">
               <thead className="cabecalho_tabela">
                 <tr>
-                  <th>NUM</th><th>Produto</th><th>Peso (Kg)</th><th>Valor</th><th>Total</th><th>Qtd. Bags</th><th>Ações</th>
+                  <th>Num</th><th>Produto</th><th>Peso (Kg)</th><th>Valor</th><th>Total</th><th>Qtd. Bags</th><th>Ações</th>
                 </tr>
               </thead>
               <tbody>

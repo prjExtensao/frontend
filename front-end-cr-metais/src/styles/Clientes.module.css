@@ -218,10 +218,30 @@ img {
   flex-shrink: 0;
 }
 
-.cabecalho button:hover {
+/* .cabecalho button:hover {
   background-color: #f8fafc !important;
   color: #020618;
   box-shadow: inset 0 0 0 3px #020618;
+} */
+
+.cabecalho button {
+  border: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cabecalho button:hover {
+  background-color: #f8fafc !important;
+  color: #020618;
+  border-color: #020618;
+}
+
+
+.headerSortable{
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s;
 }
 
 .modalOverlay {
@@ -258,15 +278,32 @@ img {
   animation: scaleIn 0.18s ease;
 }
 
-.btn_fechar {
+/* .btn_fechar {
   background-color: #ff6467 !important;
   color: #82181a;
   width: 100% !important;
-  /* height: 3rem; */
+  height: 3rem;
   font-size: 20px !important;
   justify-content: center;
   text-align: center;
   display: flex;
+  }  */
+
+
+.btn_fechar {
+  background-color: #ff6467 !important;
+  color: #82181a;
+
+  width: 100% !important;
+  font-size: 20px !important;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 3px solid transparent;
+
+  transition: 0.2s;
 }
 
 .btn_fechar:hover {

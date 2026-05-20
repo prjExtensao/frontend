@@ -26,6 +26,7 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditClosing, setIsEditClosing] = useState(false);
   const [fornecedorEditandoId, setFornecedorEditandoId] = useState(null);
+  const [ordenacao, setOrdenacao] = useState({campo: "idFornecedor", direcao: "asc",});
 
   // Modal de detalhes
   const [isDetalheOpen, setIsDetalheOpen] = useState(false);
@@ -48,6 +49,25 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
   useEffect(() => {
     carregarFornecedores();
   }, []);
+
+  const ordenarPor = (campo) => {
+  let direcao = "asc";
+
+  if (
+    ordenacao.campo === campo &&
+    ordenacao.direcao === "asc"
+  ) {
+    direcao = "desc";
+  }
+
+  setOrdenacao({ campo, direcao });
+};
+
+const renderSeta = (campo) => {
+  if (ordenacao.campo !== campo) return "↕";
+
+  return ordenacao.direcao === "asc" ? "↑" : "↓";
+};  
 
   async function excluirFornecedor(e, id) {
     e.stopPropagation();
@@ -102,9 +122,55 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
     }, 300);
   }
 
-  const filtrados = fornecedores.filter((f) =>
+  // const filtrados = fornecedores.filter((f) =>
+  //   f.nome?.toLowerCase().includes(filtroNome.toLowerCase())
+  // );
+
+  const filtrados = fornecedores
+  .filter((f) =>
     f.nome?.toLowerCase().includes(filtroNome.toLowerCase())
-  );
+  )
+  .sort((a, b) => {
+    const { campo, direcao } = ordenacao;
+
+    let valorA;
+    let valorB;
+
+    switch (campo) {
+      case "idFornecedor":
+        valorA = a.idFornecedor;
+        valorB = b.idFornecedor;
+        break;
+
+      case "nome":
+        valorA = a.nome?.toLowerCase() || "";
+        valorB = b.nome?.toLowerCase() || "";
+        break;
+
+      case "responsavel":
+        valorA = a.responsavel?.nome?.toLowerCase() || "";
+        valorB = b.responsavel?.nome?.toLowerCase() || "";
+        break;
+
+      case "tabela":
+        valorA = a.tabelaPreco?.nomeTabela?.toLowerCase() || "";
+        valorB = b.tabelaPreco?.nomeTabela?.toLowerCase() || "";
+        break;
+
+      default:
+        return 0;
+    }
+
+    if (valorA < valorB) {
+      return direcao === "asc" ? -1 : 1;
+    }
+
+    if (valorA > valorB) {
+      return direcao === "asc" ? 1 : -1;
+    }
+
+    return 0;
+  });
 
   return (
     <>
@@ -134,10 +200,10 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
 
       <div className={styles.listaClientesGrid}>
         <div className={styles.clientesHeader}>
-          <span className={styles.clienteId}>ID</span>
-          <span className={styles.clienteNome}>Nome</span>
-          <span className={styles.clienteResponsavel}>Responsável</span>
-          <span className={styles.clienteTabela}>Tabela</span>
+          <span className={styles.headerSortable}onClick={() => ordenarPor("idFornecedor")}>ID {renderSeta("idFornecedor")}</span>
+          <span className={`${styles.clienteNome} ${styles.headerSortable}`}onClick={() => ordenarPor("nome")}>Nome {renderSeta("nome")}</span>
+          <span className={`${styles.clienteResponsavel} ${styles.headerSortable}`}onClick={() => ordenarPor("responsavel")}>Responsável {renderSeta("responsavel")}</span>
+          <span className={`${styles.clienteTabela} ${styles.headerSortable}`}onClick={() => ordenarPor("tabela")}>Tabela {renderSeta("tabela")}</span>
           <span className={styles.clienteTabela}>Ações</span>
         </div>
 
@@ -196,6 +262,7 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditClosing, setIsEditClosing] = useState(false);
   const [clienteEditandoId, setClienteEditandoId] = useState(null);
+  const [ordenacao, setOrdenacao] = useState({campo: "idCliente", direcao: "asc", });
 
   const carregarClientes = async () => {
     try {
@@ -209,6 +276,25 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
   useEffect(() => {
     carregarClientes();
   }, []);
+
+    const ordenarPor = (campo) => {
+    let direcao = "asc";
+
+    if (
+      ordenacao.campo === campo &&
+      ordenacao.direcao === "asc"
+    ) {
+      direcao = "desc";
+    }
+
+    setOrdenacao({ campo, direcao });
+  };
+
+  const renderSeta = (campo) => {
+    if (ordenacao.campo !== campo) return "↕";
+
+    return ordenacao.direcao === "asc" ? "↑" : "↓";
+  };
 
   async function excluirClienteItem(id) {
     if (!window.confirm("Tem certeza que deseja excluir este cliente?")) return;
@@ -242,9 +328,50 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
     }, 300);
   }
 
-  const filtrados = clientes.filter((c) =>
+  // const filtrados = clientes.filter((c) =>
+  //   c.razaoSocial?.toLowerCase().includes(filtroNome.toLowerCase())
+  // );
+
+  const filtrados = clientes
+  .filter((c) =>
     c.razaoSocial?.toLowerCase().includes(filtroNome.toLowerCase())
-  );
+  )
+  .sort((a, b) => {
+    const { campo, direcao } = ordenacao;
+
+    let valorA;
+    let valorB;
+
+    switch (campo) {
+      case "idCliente":
+        valorA = a.idCliente;
+        valorB = b.idCliente;
+        break;
+
+      case "razaoSocial":
+        valorA = a.razaoSocial?.toLowerCase() || "";
+        valorB = b.razaoSocial?.toLowerCase() || "";
+        break;
+
+      case "tabelaPreco":
+        valorA = a.tabelaPreco?.toLowerCase() || "";
+        valorB = b.tabelaPreco?.toLowerCase() || "";
+        break;
+
+      default:
+        return 0;
+    }
+
+    if (valorA < valorB) {
+      return direcao === "asc" ? -1 : 1;
+    }
+
+    if (valorA > valorB) {
+      return direcao === "asc" ? 1 : -1;
+    }
+
+    return 0;
+  });
 
   return (
     <>
@@ -267,11 +394,11 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
       />
 
       <div className={styles.listaClientesGrid}>
-        <div className={styles.clientesHeader}>
-          <span className={styles.clienteId}>ID</span>
-          <span className={styles.clienteNome}>Razão Social</span>
+          <div className={styles.clientesHeader}>
+          <span className={styles.headerSortable} onClick={() => ordenarPor("idCliente")}>ID {renderSeta("idCliente")}</span>
+          <span className={`${styles.clienteNome} ${styles.headerSortable}`} onClick={() => ordenarPor("razaoSocial")}>Razão Social {renderSeta("razaoSocial")}</span>
           <span className={styles.clienteResponsavel}>CNPJ</span>
-          <span className={styles.clienteTabela}>Tabela</span>
+          <span className={`${styles.clienteTabela} ${styles.headerSortable}`}onClick={() => ordenarPor("tabelaPreco")}>Tabela {renderSeta("tabelaPreco")}</span>
           <span className={styles.clienteTabela}>Ações</span>
         </div>
 
