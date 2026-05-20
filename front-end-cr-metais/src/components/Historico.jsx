@@ -30,7 +30,7 @@ function Historico() {
 
   const HistoricoHeader = () => (
     <div className={styles.historicoHeader} style={{ gridTemplateColumns: colunasGrid }}>
-      <span className={styles.idCompra}>ID</span>
+      <span className={styles.idCompra}>ID Compra</span>
       <span className={styles.produto}>Produto</span>
       <span className={styles.peso}>Peso</span>
       <span className={styles.valor}>Valor</span>
