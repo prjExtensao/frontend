@@ -134,7 +134,7 @@ const Boleta = () => {
   }), { total: 0, peso: 0, bags: 0 });
 
   const confirmarPagamento = async () => {
-    const itensValidos = itensBoleta.filter(i => i.produtoId && Number(i.peso) > 0 && Number(i.bags) > 0);
+    const itensValidos = itensBoleta.filter(i => i.produtoId && Number(i.peso) > 0);
 
     if (!clienteSelecionadoId) return alert("Selecione um cliente/fornecedor.");
     if (itensValidos.length === 0) return alert("Adicione produtos com peso válido.");
