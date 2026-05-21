@@ -14,7 +14,7 @@ export default function CadastroClienteModal({ onCadastroSucesso }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [csenha, setCSenha] = useState("");
-  const [cargo, setCargo] = useState("");
+  const [cargo, setCargo] = useState(""); // Começa vazio para forçar a escolha
   const [erros, setErros] = useState({});
 
   function emailValido(emailVal) {
@@ -120,9 +120,18 @@ export default function CadastroClienteModal({ onCadastroSucesso }) {
           </div>
           {erros.csenha && <span className="erro">{erros.csenha}</span>}
 
+          {/* O input de texto antigo foi substituído por este select */}
           <div className="input-box">
             <img src={info} className="icon-img" alt="info" />
-            <input placeholder="Cargo (ex: ADMIN)" value={cargo} onChange={(e) => setCargo(e.target.value)} />
+            <select 
+              value={cargo} 
+              onChange={(e) => setCargo(e.target.value)}
+              className="select-cargo" // Você pode usar essa classe para estilizar no CSS se precisar
+            >
+              <option value="" disabled hidden>Selecione um cargo</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="COMUM">COMUM</option>
+            </select>
           </div>
           {erros.cargo && <span className="erro">{erros.cargo}</span>}
           
