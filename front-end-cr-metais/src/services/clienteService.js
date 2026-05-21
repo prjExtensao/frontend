@@ -12,6 +12,20 @@ export async function listarClientes() {
   return res.json();
 }
  
+
+export async function buscarContaPagamentoPorFornecedor(idFornecedor) {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/contas-pagamentos/fornecedor/${idFornecedor}`, {
+    //                      ↑ contas-pagamentos  (igual ao @RequestMapping)
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error("Conta de pagamento não encontrada");
+  return res.json();
+}
+
 export async function buscarClientePorId(id) {
   const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/clientes/${id}`, {

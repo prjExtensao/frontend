@@ -5,29 +5,32 @@ import {
   FaTag, FaIdCard, FaRegFileAlt, FaUniversity, FaCreditCard, FaCheckCircle, FaTimesCircle 
 } from "react-icons/fa";
 import styles from "../styles/DetalheFornecedor.module.css";
- 
+import { buscarContaPagamentoPorFornecedor } from "../services/clienteService";
+
 export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, fornecedorId }) {
   const [fornecedor, setFornecedor] = useState(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
- 
+
   useEffect(() => {
     if (!isOpen || !fornecedorId) return;
- 
+
     setLoading(true);
     setErro(null);
     setFornecedor(null);
- 
+
     const token = localStorage.getItem("token");
-    fetch(`${API_URL}/fornecedores/${fornecedorId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
+    const headers = { Authorization: `Bearer ${token}` };
+
+    Promise.all([
+      fetch(`${API_URL}/fornecedores/${fornecedorId}`, { headers }).then((res) => {
         if (!res.ok) throw new Error("Erro ao buscar fornecedor");
         return res.json();
-      })
-      .then((data) => {
-        setFornecedor(data);
+      }),
+      buscarContaPagamentoPorFornecedor(fornecedorId).catch(() => null),
+    ])
+      .then(([fornecedorData, contaData]) => {
+        setFornecedor({ ...fornecedorData, ...contaData });
         setLoading(false);
       })
       .catch((err) => {
@@ -35,20 +38,19 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
         setLoading(false);
       });
   }, [isOpen, fornecedorId]);
- 
+
   if (!isOpen) return null;
- 
-  // Tratamento para o campo "Pertence ao fornecedor" (Sim ou Não)
+
   const pertenceAoFornecedorTexto = (val) => {
     if (val === true || val === "sim" || val === "SIM" || val === "S") return "Sim";
     if (val === false || val === "nao" || val === "não" || val === "NAO" || val === "N") return "Não";
     return null;
   };
- 
+
   return (
     <div className={`${styles.overlay} ${isClosing ? styles.overlayOut : styles.overlayIn}`}>
       <div className={`${styles.modal} ${isClosing ? styles.modalOut : styles.modalIn}`}>
- 
+
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
@@ -66,7 +68,7 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
             <FaTimes />
           </button>
         </div>
- 
+
         {/* Body */}
         <div className={styles.body}>
           {loading && (
@@ -75,13 +77,13 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
               <span>Buscando informações...</span>
             </div>
           )}
- 
+
           {erro && (
             <div className={styles.erroBox}>
               <span>⚠ {erro}</span>
             </div>
           )}
- 
+
           {!loading && !erro && fornecedor && (
             <div className={styles.modalContentWrapper}>
               {/* ID Badge */}
@@ -89,7 +91,7 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
                 <FaIdCard className={styles.idIcon} />
                 <span>ID #{fornecedor.idFornecedor || fornecedor.id}</span>
               </div>
- 
+
               {/* SEÇÃO 1: DADOS GERAIS */}
               <h3 className={styles.sectionTitle}>Dados Gerais</h3>
               <div className={styles.grid}>
@@ -138,7 +140,7 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
                   }
                 />
               </div>
- 
+
               {/* SEÇÃO 2: ENDEREÇO */}
               <h3 className={styles.sectionTitle}>Endereço</h3>
               <div className={styles.grid}>
@@ -178,30 +180,36 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
                   value={fornecedor.endereco?.complemento}
                 />
               </div>
- 
-             {/* SEÇÃO 3: FINANCEIRO E PAGAMENTO*/}
-              {/*<h3 className={styles.sectionTitle}>Informações Financeiras & Pagamento</h3>*/}
+
+              {/* SEÇÃO 3: FINANCEIRO E PAGAMENTO */}
+              <h3 className={styles.sectionTitle}>Informações Financeiras & Pagamento</h3>
               <div className={styles.grid}>
                 <InfoCard
                   icon={<FaCreditCard />}
                   label="Tipo de Pagamento"
-                  value={fornecedor.tipoPagamento} 
+                  value={fornecedor.tipoPagamento}
                 />
-                
+
                 <InfoCard
                   icon={
-                    fornecedor.pertenceAoFornecedor === true || String(fornecedor.pertenceAoFornecedor).toLowerCase() === "sim"
-                      ? <FaCheckCircle style={{ color: "#2f855a" }} /> 
+                    fornecedor.pertenceFornecedor === true || String(fornecedor.pertenceFornecedor).toLowerCase() === "sim"
+                      ? <FaCheckCircle style={{ color: "#2f855a" }} />
                       : <FaTimesCircle style={{ color: "#c53030" }} />
                   }
                   label="A conta pertence ao fornecedor?"
-                  value={pertenceAoFornecedorTexto(fornecedor.pertenceAoFornecedor)}
+                  value={pertenceAoFornecedorTexto(fornecedor.pertenceFornecedor)}
                 />
 
                 <InfoCard
                   icon={<FaUniversity />}
-                  label="Chave Pix ou Banco"
-                  value={fornecedor.chavePix || fornecedor.banco}
+                  label="Chave Pix"
+                  value={fornecedor.chavePix}
+                />
+
+                <InfoCard
+                  icon={<FaUniversity />}
+                  label="Banco"
+                  value={fornecedor.banco}
                 />
 
                 <InfoCard
@@ -213,7 +221,7 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
                 <InfoCard
                   icon={<FaUniversity />}
                   label="Número da Conta"
-                  value={fornecedor.numeroConta}
+                  value={fornecedor.conta}
                 />
 
                 <InfoCard
@@ -221,24 +229,24 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
                   label="Tipo de Conta"
                   value={fornecedor.tipoConta}
                 />
-                
-                {/* Dados do Titular (Caso não pertença ao fornecedor) */}
+
+                {/* Dados do Titular (caso não pertença ao fornecedor) */}
                 <InfoCard
                   icon={<FaUser />}
                   label="Nome do Titular da Conta"
-                  value={fornecedor.nomeTitular}
+                  value={fornecedor.nome}
                 />
 
                 <InfoCard
                   icon={<FaIdCard />}
                   label="CPF/CNPJ do Titular"
-                  value={fornecedor.cpfCnpjTitular}
+                  value={fornecedor.documento}
                 />
               </div>
             </div>
           )}
         </div>
- 
+
         {/* Footer */}
         <div className={styles.footer}>
           <button className={styles.btnFechar} onClick={onClose}>
@@ -249,10 +257,10 @@ export default function DetalheFornecedorModal({ isOpen, isClosing, onClose, for
     </div>
   );
 }
- 
+
 function InfoCard({ icon, label, value, highlight, wide }) {
-  if (value === null || value === undefined || value === "") return null; 
-  
+  if (value === null || value === undefined || value === "") return null;
+
   return (
     <div className={`${styles.infoCard} ${highlight ? styles.infoCardHighlight : ""} ${wide ? styles.infoCardWide : ""}`}>
       <div className={styles.infoIcon}>{icon}</div>
