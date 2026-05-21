@@ -15,6 +15,7 @@ import DetalheFornecedorModal from "./DetalheFornecedorModal";
 // Modais de Cliente
 import NovoClienteModal from "./NovoClienteModal";
 import EditarClienteModal from "./EditarClienteModal";
+import DetalheClienteModal from "./DetalheClientemodal";
 
 // ─────────────────────────────────────────────
 // Sub-componente: listagem de FORNECEDORES
@@ -187,7 +188,7 @@ function ListaFornecedores({ filtroNome }) {
 }
 
 // ─────────────────────────────────────────────
-// Sub-componente: listagem de CLIENTES
+// Sub-componente: listagem de CLIENTES (CORRIGIDO E SEM DUPLICIDADE)
 // ─────────────────────────────────────────────
 function ListaClientes({ filtroNome }) {
   const [clientes, setClientes] = useState([]);
@@ -251,7 +252,7 @@ function ListaClientes({ filtroNome }) {
   }
 
   function handleClose() {
-    setIsClosing(true);
+    setIsClosing(true)
     setTimeout(() => {
       setIsModalOpen(false);
       setIsClosing(false);
@@ -280,7 +281,8 @@ function ListaClientes({ filtroNome }) {
       switch (campo) {
         case "idCliente": valorA = a.idCliente; valorB = b.idCliente; break;
         case "razaoSocial": valorA = a.razaoSocial?.toLowerCase() || ""; valorB = b.razaoSocial?.toLowerCase() || ""; break;
-        case "tabelaPreco": valorA = a.tabelaPreco?.toLowerCase() || ""; valorB = b.tabelaPreco?.toLowerCase() || ""; break;
+        case "cnpj": valorA = a.cnpj?.toLowerCase() || ""; valorB = b.cnpj?.toLowerCase() || ""; break;
+        case "tabelaPreco": valorA = (a.tabelaPreco || a.tabela?.nomeTabela || "").toLowerCase(); valorB = (b.tabelaPreco || b.tabela?.nomeTabela || "").toLowerCase(); break;
         default: return 0;
       }
       if (valorA < valorB) return direcao === "asc" ? -1 : 1;
@@ -296,13 +298,14 @@ function ListaClientes({ filtroNome }) {
 
       <NovoClienteModal isOpen={isModalOpen} isClosing={isClosing} onClose={handleClose} onSuccess={carregarClientes} />
       <EditarClienteModal isOpen={isEditModalOpen} isClosing={isEditClosing} onClose={fecharEdicao} clienteId={clienteEditandoId} onSuccess={carregarClientes} />
-      {/*<DetalheClienteModal isOpen={isDetalheOpen} isClosing={isDetalheClosing} onClose={fecharDetalhe} clienteId={clienteDetalheId} />*/}
+      <DetalheClienteModal isOpen={isDetalheOpen} isClosing={isDetalheClosing} onClose={fecharDetalhe} clienteId={clienteDetalheId} />
 
       <div className={styles.listaClientesGrid}>
         <div className={styles.clientesHeader}>
           <span className={styles.headerSortable} onClick={() => ordenarPor("idCliente")}>ID {renderSeta("idCliente")}</span>
           <span className={`${styles.clienteNome} ${styles.headerSortable}`} onClick={() => ordenarPor("razaoSocial")}>Razão Social {renderSeta("razaoSocial")}</span>
-          <span className={styles.clienteResponsavel}>Responsável</span>
+          <span className={`${styles.clienteResponsavel} ${styles.headerSortable}`} onClick={() => ordenarPor("cnpj")}>CNPJ {renderSeta("cnpj")}</span>
+          {/* Alterado o cabeçalho de Telefone para Tabela */}
           <span className={`${styles.clienteTabela} ${styles.headerSortable}`} onClick={() => ordenarPor("tabelaPreco")}>Tabela {renderSeta("tabelaPreco")}</span>
           <span className={styles.clienteTabela}>Ações</span>
         </div>
@@ -321,8 +324,11 @@ function ListaClientes({ filtroNome }) {
                 <div className={styles.clienteItem}>
                   <span className={styles.clienteId}>{c.idCliente}</span>
                   <span className={styles.clienteNome}>{c.razaoSocial}</span>
-                  <span className={styles.clienteResponsavel}>{c.responsavel || "-"}</span>
-                  <span className={styles.clienteTabela}>{c.tabelaPreco || "-"}</span>
+                  <span className={styles.clienteResponsavel}>{c.cnpj || "-"}</span>
+                  {/* Exibe o nome da tabela vinculada ou um "-" caso o cliente ainda não possua relacionamento com tabelas no DTO */}
+                  <span className={styles.clienteTabela}>
+                    {c.tabelaPreco || c.tabela?.nomeTabela || "-"}
+                  </span>
                   <div className={styles.clienteEdicao}>
                     <Tippy content="Editar cliente" theme="light">
                       <span className={`${styles.acao} ${styles.editar}`} onClick={(e) => abrirEdicao(e, c.idCliente)}>
