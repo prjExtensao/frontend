@@ -19,16 +19,14 @@ import EditarClienteModal from "./EditarClienteModal";
 // ─────────────────────────────────────────────
 // Sub-componente: listagem de FORNECEDORES
 // ─────────────────────────────────────────────
-function ListaFornecedores({ filtroNome, setFiltroNome }) {
+function ListaFornecedores({ filtroNome }) {
   const [fornecedores, setFornecedores] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditClosing, setIsEditClosing] = useState(false);
   const [fornecedorEditandoId, setFornecedorEditandoId] = useState(null);
-  const [ordenacao, setOrdenacao] = useState({campo: "idFornecedor", direcao: "asc",});
-
-  // Modal de detalhes
+  const [ordenacao, setOrdenacao] = useState({ campo: "idFornecedor", direcao: "asc" });
   const [isDetalheOpen, setIsDetalheOpen] = useState(false);
   const [isDetalheClosing, setIsDetalheClosing] = useState(false);
   const [fornecedorDetalheId, setFornecedorDetalheId] = useState(null);
@@ -46,28 +44,19 @@ function ListaFornecedores({ filtroNome, setFiltroNome }) {
     }
   };
 
-  useEffect(() => {
-    carregarFornecedores();
-  }, []);
+  useEffect(() => { carregarFornecedores(); }, []);
 
   const ordenarPor = (campo) => {
-  let direcao = "asc";
+    setOrdenacao((prev) => ({
+      campo,
+      direcao: prev.campo === campo && prev.direcao === "asc" ? "desc" : "asc",
+    }));
+  };
 
-  if (
-    ordenacao.campo === campo &&
-    ordenacao.direcao === "asc"
-  ) {
-    direcao = "desc";
-  }
-
-  setOrdenacao({ campo, direcao });
-};
-
-const renderSeta = (campo) => {
-  if (ordenacao.campo !== campo) return "↕";
-
-  return ordenacao.direcao === "asc" ? "↑" : "↓";
-};  
+  const renderSeta = (campo) => {
+    if (ordenacao.campo !== campo) return "↕";
+    return ordenacao.direcao === "asc" ? "↑" : "↓";
+  };
 
   async function excluirFornecedor(e, id) {
     e.stopPropagation();
@@ -122,88 +111,39 @@ const renderSeta = (campo) => {
     }, 300);
   }
 
-  // const filtrados = fornecedores.filter((f) =>
-  //   f.nome?.toLowerCase().includes(filtroNome.toLowerCase())
-  // );
-
   const filtrados = fornecedores
-  .filter((f) =>
-    f.nome?.toLowerCase().includes(filtroNome.toLowerCase())
-  )
-  .sort((a, b) => {
-    const { campo, direcao } = ordenacao;
-
-    let valorA;
-    let valorB;
-
-    switch (campo) {
-      case "idFornecedor":
-        valorA = a.idFornecedor;
-        valorB = b.idFornecedor;
-        break;
-
-      case "nome":
-        valorA = a.nome?.toLowerCase() || "";
-        valorB = b.nome?.toLowerCase() || "";
-        break;
-
-      case "responsavel":
-        valorA = a.responsavel?.nome?.toLowerCase() || "";
-        valorB = b.responsavel?.nome?.toLowerCase() || "";
-        break;
-
-      case "tabela":
-        valorA = a.tabelaPreco?.nomeTabela?.toLowerCase() || "";
-        valorB = b.tabelaPreco?.nomeTabela?.toLowerCase() || "";
-        break;
-
-      default:
-        return 0;
-    }
-
-    if (valorA < valorB) {
-      return direcao === "asc" ? -1 : 1;
-    }
-
-    if (valorA > valorB) {
-      return direcao === "asc" ? 1 : -1;
-    }
-
-    return 0;
-  });
+    .filter((f) => f.nome?.toLowerCase().includes(filtroNome.toLowerCase()))
+    .sort((a, b) => {
+      const { campo, direcao } = ordenacao;
+      let valorA, valorB;
+      switch (campo) {
+        case "idFornecedor": valorA = a.idFornecedor; valorB = b.idFornecedor; break;
+        case "nome": valorA = a.nome?.toLowerCase() || ""; valorB = b.nome?.toLowerCase() || ""; break;
+        case "responsavel": valorA = a.responsavel?.nome?.toLowerCase() || ""; valorB = b.responsavel?.nome?.toLowerCase() || ""; break;
+        case "tabela": valorA = a.tabelaPreco?.nomeTabela?.toLowerCase() || ""; valorB = b.tabelaPreco?.nomeTabela?.toLowerCase() || ""; break;
+        default: return 0;
+      }
+      if (valorA < valorB) return direcao === "asc" ? -1 : 1;
+      if (valorA > valorB) return direcao === "asc" ? 1 : -1;
+      return 0;
+    });
 
   return (
     <>
       <div style={{ display: "none" }}>
-        <button id="btn-cadastrar-fornecedor-trigger" onClick={() => setIsModalOpen(true)}></button>
+        <button id="btn-cadastrar-fornecedor-trigger" onClick={() => setIsModalOpen(true)} />
       </div>
 
-      <NovoFornecedorModal
-        isOpen={isModalOpen}
-        isClosing={isClosing}
-        onClose={handleClose}
-        onSuccess={carregarFornecedores}
-      />
-      <EditarFornecedorModal
-        isOpen={isEditModalOpen}
-        isClosing={isEditClosing}
-        onClose={fecharEdicao}
-        fornecedorId={fornecedorEditandoId}
-        onSuccess={carregarFornecedores}
-      />
-      <DetalheFornecedorModal
-        isOpen={isDetalheOpen}
-        isClosing={isDetalheClosing}
-        onClose={fecharDetalhe}
-        fornecedorId={fornecedorDetalheId}
-      />
+      <NovoFornecedorModal isOpen={isModalOpen} isClosing={isClosing} onClose={handleClose} onSuccess={carregarFornecedores} />
+      <EditarFornecedorModal isOpen={isEditModalOpen} isClosing={isEditClosing} onClose={fecharEdicao} fornecedorId={fornecedorEditandoId} onSuccess={carregarFornecedores} />
+      <DetalheFornecedorModal isOpen={isDetalheOpen} isClosing={isDetalheClosing} onClose={fecharDetalhe} fornecedorId={fornecedorDetalheId} />
 
       <div className={styles.listaClientesGrid}>
         <div className={styles.clientesHeader}>
-          <span className={styles.headerSortable}onClick={() => ordenarPor("idFornecedor")}>ID {renderSeta("idFornecedor")}</span>
-          <span className={`${styles.clienteNome} ${styles.headerSortable}`}onClick={() => ordenarPor("nome")}>Nome {renderSeta("nome")}</span>
-          <span className={`${styles.clienteResponsavel} ${styles.headerSortable}`}onClick={() => ordenarPor("responsavel")}>Responsável {renderSeta("responsavel")}</span>
-          <span className={`${styles.clienteTabela} ${styles.headerSortable}`}onClick={() => ordenarPor("tabela")}>Tabela {renderSeta("tabela")}</span>
+          <span className={styles.headerSortable} onClick={() => ordenarPor("idFornecedor")}>ID {renderSeta("idFornecedor")}</span>
+          <span className={`${styles.clienteNome} ${styles.headerSortable}`} onClick={() => ordenarPor("nome")}>Nome {renderSeta("nome")}</span>
+          <span className={`${styles.clienteResponsavel} ${styles.headerSortable}`} onClick={() => ordenarPor("responsavel")}>Responsável {renderSeta("responsavel")}</span>
+          <span className={`${styles.clienteTabela} ${styles.headerSortable}`} onClick={() => ordenarPor("tabela")}>Tabela {renderSeta("tabela")}</span>
           <span className={styles.clienteTabela}>Ações</span>
         </div>
 
@@ -225,24 +165,18 @@ const renderSeta = (campo) => {
                   <span className={styles.clienteTabela}>{f.tabelaPreco?.nomeTabela || "-"}</span>
                   <div className={styles.clienteEdicao}>
                     <Tippy content="Editar fornecedor" theme="light">
-                      <span
-                        className={`${styles.acao} ${styles.editar}`}
-                        onClick={(e) => abrirEdicao(e, f.idFornecedor)}
-                      >
+                      <span className={`${styles.acao} ${styles.editar}`} onClick={(e) => abrirEdicao(e, f.idFornecedor)}>
                         <FaEdit className={styles.editIcon} />
                       </span>
                     </Tippy>
                     <Tippy content="Excluir fornecedor" theme="light">
-                      <span
-                        className={`${styles.acao} ${styles.excluir}`}
-                        onClick={(e) => excluirFornecedor(e, f.idFornecedor)}
-                      >
+                      <span className={`${styles.acao} ${styles.excluir}`} onClick={(e) => excluirFornecedor(e, f.idFornecedor)}>
                         <FaTrashAlt className={styles.trashAlt} />
                       </span>
                     </Tippy>
                   </div>
                 </div>
-                <div className={styles.divisao}></div>
+                <div className={styles.divisao} />
               </div>
             ))
           )}
@@ -255,14 +189,17 @@ const renderSeta = (campo) => {
 // ─────────────────────────────────────────────
 // Sub-componente: listagem de CLIENTES
 // ─────────────────────────────────────────────
-function ListaClientes({ filtroNome, setFiltroNome }) {
+function ListaClientes({ filtroNome }) {
   const [clientes, setClientes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditClosing, setIsEditClosing] = useState(false);
   const [clienteEditandoId, setClienteEditandoId] = useState(null);
-  const [ordenacao, setOrdenacao] = useState({campo: "idCliente", direcao: "asc", });
+  const [ordenacao, setOrdenacao] = useState({ campo: "idCliente", direcao: "asc" });
+  const [isDetalheOpen, setIsDetalheOpen] = useState(false);
+  const [isDetalheClosing, setIsDetalheClosing] = useState(false);
+  const [clienteDetalheId, setClienteDetalheId] = useState(null);
 
   const carregarClientes = async () => {
     try {
@@ -273,30 +210,22 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
     }
   };
 
-  useEffect(() => {
-    carregarClientes();
-  }, []);
+  useEffect(() => { carregarClientes(); }, []);
 
-    const ordenarPor = (campo) => {
-    let direcao = "asc";
-
-    if (
-      ordenacao.campo === campo &&
-      ordenacao.direcao === "asc"
-    ) {
-      direcao = "desc";
-    }
-
-    setOrdenacao({ campo, direcao });
+  const ordenarPor = (campo) => {
+    setOrdenacao((prev) => ({
+      campo,
+      direcao: prev.campo === campo && prev.direcao === "asc" ? "desc" : "asc",
+    }));
   };
 
   const renderSeta = (campo) => {
     if (ordenacao.campo !== campo) return "↕";
-
     return ordenacao.direcao === "asc" ? "↑" : "↓";
   };
 
-  async function excluirClienteItem(id) {
+  async function excluirClienteItem(e, id) {
+    e.stopPropagation();
     if (!window.confirm("Tem certeza que deseja excluir este cliente?")) return;
     try {
       await deletarCliente(id);
@@ -306,7 +235,8 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
     }
   }
 
-  function abrirEdicao(id) {
+  function abrirEdicao(e, id) {
+    e.stopPropagation();
     setClienteEditandoId(id);
     setIsEditModalOpen(true);
   }
@@ -328,77 +258,52 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
     }, 300);
   }
 
-  // const filtrados = clientes.filter((c) =>
-  //   c.razaoSocial?.toLowerCase().includes(filtroNome.toLowerCase())
-  // );
+  function abrirDetalhe(id) {
+    setClienteDetalheId(id);
+    setIsDetalheOpen(true);
+  }
+
+  function fecharDetalhe() {
+    setIsDetalheClosing(true);
+    setTimeout(() => {
+      setIsDetalheOpen(false);
+      setIsDetalheClosing(false);
+      setClienteDetalheId(null);
+    }, 300);
+  }
 
   const filtrados = clientes
-  .filter((c) =>
-    c.razaoSocial?.toLowerCase().includes(filtroNome.toLowerCase())
-  )
-  .sort((a, b) => {
-    const { campo, direcao } = ordenacao;
-
-    let valorA;
-    let valorB;
-
-    switch (campo) {
-      case "idCliente":
-        valorA = a.idCliente;
-        valorB = b.idCliente;
-        break;
-
-      case "razaoSocial":
-        valorA = a.razaoSocial?.toLowerCase() || "";
-        valorB = b.razaoSocial?.toLowerCase() || "";
-        break;
-
-      case "tabelaPreco":
-        valorA = a.tabelaPreco?.toLowerCase() || "";
-        valorB = b.tabelaPreco?.toLowerCase() || "";
-        break;
-
-      default:
-        return 0;
-    }
-
-    if (valorA < valorB) {
-      return direcao === "asc" ? -1 : 1;
-    }
-
-    if (valorA > valorB) {
-      return direcao === "asc" ? 1 : -1;
-    }
-
-    return 0;
-  });
+    .filter((c) => c.razaoSocial?.toLowerCase().includes(filtroNome.toLowerCase()))
+    .sort((a, b) => {
+      const { campo, direcao } = ordenacao;
+      let valorA, valorB;
+      switch (campo) {
+        case "idCliente": valorA = a.idCliente; valorB = b.idCliente; break;
+        case "razaoSocial": valorA = a.razaoSocial?.toLowerCase() || ""; valorB = b.razaoSocial?.toLowerCase() || ""; break;
+        case "tabelaPreco": valorA = a.tabelaPreco?.toLowerCase() || ""; valorB = b.tabelaPreco?.toLowerCase() || ""; break;
+        default: return 0;
+      }
+      if (valorA < valorB) return direcao === "asc" ? -1 : 1;
+      if (valorA > valorB) return direcao === "asc" ? 1 : -1;
+      return 0;
+    });
 
   return (
     <>
       <div style={{ display: "none" }}>
-        <button id="btn-cadastrar-cliente-trigger" onClick={() => setIsModalOpen(true)}></button>
+        <button id="btn-cadastrar-cliente-trigger" onClick={() => setIsModalOpen(true)} />
       </div>
 
-      <NovoClienteModal
-        isOpen={isModalOpen}
-        isClosing={isClosing}
-        onClose={handleClose}
-        onSuccess={carregarClientes}
-      />
-      <EditarClienteModal
-        isOpen={isEditModalOpen}
-        isClosing={isEditClosing}
-        onClose={fecharEdicao}
-        clienteId={clienteEditandoId}
-        onSuccess={carregarClientes}
-      />
+      <NovoClienteModal isOpen={isModalOpen} isClosing={isClosing} onClose={handleClose} onSuccess={carregarClientes} />
+      <EditarClienteModal isOpen={isEditModalOpen} isClosing={isEditClosing} onClose={fecharEdicao} clienteId={clienteEditandoId} onSuccess={carregarClientes} />
+      {/*<DetalheClienteModal isOpen={isDetalheOpen} isClosing={isDetalheClosing} onClose={fecharDetalhe} clienteId={clienteDetalheId} />*/}
 
       <div className={styles.listaClientesGrid}>
-          <div className={styles.clientesHeader}>
+        <div className={styles.clientesHeader}>
           <span className={styles.headerSortable} onClick={() => ordenarPor("idCliente")}>ID {renderSeta("idCliente")}</span>
           <span className={`${styles.clienteNome} ${styles.headerSortable}`} onClick={() => ordenarPor("razaoSocial")}>Razão Social {renderSeta("razaoSocial")}</span>
-          <span className={styles.clienteResponsavel}>CNPJ</span>
-          <span className={`${styles.clienteTabela} ${styles.headerSortable}`}onClick={() => ordenarPor("tabelaPreco")}>Tabela {renderSeta("tabelaPreco")}</span>
+          <span className={styles.clienteResponsavel}>Responsável</span>
+          <span className={`${styles.clienteTabela} ${styles.headerSortable}`} onClick={() => ordenarPor("tabelaPreco")}>Tabela {renderSeta("tabelaPreco")}</span>
           <span className={styles.clienteTabela}>Ações</span>
         </div>
 
@@ -410,26 +315,28 @@ function ListaClientes({ filtroNome, setFiltroNome }) {
               <div
                 key={c.idCliente}
                 className={`${styles.clienteLine} ${index % 2 === 0 ? styles.linhaPar : styles.linhaImpar}`}
+                onClick={() => abrirDetalhe(c.idCliente)}
+                style={{ cursor: "pointer" }}
               >
                 <div className={styles.clienteItem}>
                   <span className={styles.clienteId}>{c.idCliente}</span>
                   <span className={styles.clienteNome}>{c.razaoSocial}</span>
-                  <span className={styles.clienteResponsavel}>{c.responsavel || c.cnpj || "-"}</span>
+                  <span className={styles.clienteResponsavel}>{c.responsavel || "-"}</span>
                   <span className={styles.clienteTabela}>{c.tabelaPreco || "-"}</span>
                   <div className={styles.clienteEdicao}>
                     <Tippy content="Editar cliente" theme="light">
-                      <span className={`${styles.acao} ${styles.editar}`} onClick={() => abrirEdicao(c.idCliente)}>
+                      <span className={`${styles.acao} ${styles.editar}`} onClick={(e) => abrirEdicao(e, c.idCliente)}>
                         <FaEdit className={styles.editIcon} />
                       </span>
                     </Tippy>
                     <Tippy content="Excluir cliente" theme="light">
-                      <span className={`${styles.acao} ${styles.excluir}`} onClick={() => excluirClienteItem(c.idCliente)}>
+                      <span className={`${styles.acao} ${styles.excluir}`} onClick={(e) => excluirClienteItem(e, c.idCliente)}>
                         <FaTrashAlt className={styles.trashAlt} />
                       </span>
                     </Tippy>
                   </div>
                 </div>
-                <div className={styles.divisao}></div>
+                <div className={styles.divisao} />
               </div>
             ))
           )}
@@ -489,11 +396,7 @@ export default function ListagemDeCliente() {
                 placeholder={visao === "fornecedores" ? "Pesquisar por nome" : "Pesquisar por razão social"}
               />
               {filtroNome && (
-                <button
-                  className={styles.searchClear}
-                  onClick={() => setFiltroNome("")}
-                  aria-label="Limpar busca"
-                >
+                <button className={styles.searchClear} onClick={() => setFiltroNome("")} aria-label="Limpar busca">
                   ✕
                 </button>
               )}
@@ -512,9 +415,9 @@ export default function ListagemDeCliente() {
 
       <div className={styles.containerInfos}>
         {visao === "fornecedores" ? (
-          <ListaFornecedores filtroNome={filtroNome} setFiltroNome={setFiltroNome} />
+          <ListaFornecedores filtroNome={filtroNome} />
         ) : (
-          <ListaClientes filtroNome={filtroNome} setFiltroNome={setFiltroNome} />
+          <ListaClientes filtroNome={filtroNome} />
         )}
       </div>
     </div>
