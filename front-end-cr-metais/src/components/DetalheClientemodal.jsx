@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { 
-  FaTimes, FaBuilding, FaPhone, FaMapMarkerAlt, 
-  FaTag, FaIdCard, FaRegFileAlt 
-} from "react-icons/fa";
-import styles from "../styles/DetalheFornecedor.module.css"; // Utilizando o mesmo CSS para manter a identidade visual
-import { buscarClientePorId } from "../services/clienteService";
+import { buscarClientePorId } from "../services/clienteService"; 
+import { FaTimes, FaUser, FaPhone, FaIdCard } from "react-icons/fa";
+import styles from "../styles/DetalheFornecedor.module.css"; 
 
 export default function DetalheClienteModal({ isOpen, isClosing, onClose, clienteId }) {
   const [cliente, setCliente] = useState(null);
@@ -24,7 +21,7 @@ export default function DetalheClienteModal({ isOpen, isClosing, onClose, client
         setLoading(false);
       })
       .catch((err) => {
-        setErro(err.message || "Erro ao buscar dados do cliente");
+        setErro(err.message || "Erro ao buscar informações do cliente");
         setLoading(false);
       });
   }, [isOpen, clienteId]);
@@ -39,7 +36,7 @@ export default function DetalheClienteModal({ isOpen, isClosing, onClose, client
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.iconBadge}>
-              <FaBuilding />
+              <FaUser />
             </div>
             <div>
               <p className={styles.headerLabel}>Detalhes do Cliente</p>
@@ -70,7 +67,6 @@ export default function DetalheClienteModal({ isOpen, isClosing, onClose, client
 
           {!loading && !erro && cliente && (
             <div className={styles.modalContentWrapper}>
-              
               {/* ID Badge */}
               <div className={styles.idBadge}>
                 <FaIdCard className={styles.idIcon} />
@@ -81,89 +77,22 @@ export default function DetalheClienteModal({ isOpen, isClosing, onClose, client
               <h3 className={styles.sectionTitle}>Dados Gerais</h3>
               <div className={styles.grid}>
                 <InfoCard
-                  icon={<FaBuilding />}
-                  label="Razão Social"
-                  value={cliente.razaoSocial}
+                  icon={<FaUser />}
+                  label="Razão Social / Nome"
+                  value={cliente.razaoSocial} // Vai renderizar "Vital"
                   highlight
                 />
                 <InfoCard
                   icon={<FaIdCard />}
-                  label="CNPJ do Cliente"
-                  value={cliente.cnpj}
+                  label="CNPJ"
+                  value={cliente.cnpj} // Vai renderizar "43758362000100"
                 />
                 <InfoCard
                   icon={<FaPhone />}
-                  label="Telefone de Contato"
-                  value={cliente.telContato}
+                  label="Telefone para Contato"
+                  value={cliente.telContato} // Vai renderizar "11977773333"
                 />
               </div>
-
-              {/* SEÇÃO 2: TABELA DE PREÇO */}
-              <h3 className={styles.sectionTitle}>Tabela Comercial</h3>
-              <div className={styles.grid}>
-                <InfoCard
-                  icon={<FaTag />}
-                  label="Nome da Tabela"
-                  value={cliente.tabelaPreco?.nomeTabela}
-                />
-                <InfoCard
-                  icon={<FaRegFileAlt />}
-                  label="Tipo / Regime"
-                  value={cliente.tabelaPreco?.tipo}
-                />
-                <InfoCard
-                  icon={<FaRegFileAlt />}
-                  label="Versão Ativa"
-                  value={cliente.tabelaPreco?.versao ? `v${cliente.tabelaPreco.versao}` : null}
-                />
-              </div>
-
-              {/* SEÇÃO 3: ENDEREÇO */}
-              <h3 className={styles.sectionTitle}>Endereço Logístico</h3>
-              {cliente.endereco ? (
-                <div className={styles.grid}>
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="CEP"
-                    value={cliente.endereco.cep}
-                  />
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="Logradouro (Rua/Av)"
-                    value={cliente.endereco.logradouro}
-                  />
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="Número"
-                    value={cliente.endereco.numero}
-                  />
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="Bairro"
-                    value={cliente.endereco.bairro}
-                  />
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="Município / Cidade"
-                    value={cliente.endereco.cidade}
-                  />
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="UF / Estado"
-                    value={cliente.endereco.estado}
-                  />
-                  <InfoCard
-                    icon={<FaMapMarkerAlt />}
-                    label="Complemento"
-                    value={cliente.endereco.complemento}
-                  />
-                </div>
-              ) : (
-                <div style={{ padding: "10px", color: "#9ca3af", fontStyle: "italic" }}>
-                  Nenhum endereço vinculado a este cliente.
-                </div>
-              )}
-
             </div>
           )}
         </div>
@@ -174,13 +103,11 @@ export default function DetalheClienteModal({ isOpen, isClosing, onClose, client
             Fechar
           </button>
         </div>
-
       </div>
     </div>
   );
 }
 
-// Componente Interno InfoCard preservando o comportamento original
 function InfoCard({ icon, label, value, highlight, wide }) {
   if (value === null || value === undefined || value === "") return null;
 
