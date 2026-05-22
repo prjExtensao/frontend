@@ -1,117 +1,285 @@
 import React, { useState, useEffect } from "react";
 import { buscarClientePorId, atualizarCliente } from "../services/clienteService";
+import CustomSelect from "./BoxSelects";
+import { API_URL } from "../services/apiClient";
 import styles from "../styles/Clientes.module.css";
 
+const TOTAL_STEPS = 3;
+
 export default function EditarClienteModal({ isOpen, isClosing, onClose, clienteId, onSuccess }) {
-  const [cnpj, setCnpj] = useState("");
-  const [razaoSocial, setRazaoSocial] = useState("");
-  const [telContato, setTelContato] = useState("");
-  const [erro, setErro] = useState("");
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepErro, setCepErro] = useState("");
+  const [tabelasDisponiveis, setTabelasDisponiveis] = useState([]);
 
+  const [idEndereco, setIdEndereco] = useState(null);
+
+  const [dadosPessoais, setDadosPessoais] = useState({
+    cnpj: "", razaoSocial: "", telContato: "",
+  });
+
+  const [endereco, setEndereco] = useState({
+    cep: "", bairro: "", logradouro: "", numero: "",
+    municipio: "", uf: "", complemento: "",
+  });
+
+  const [tabela, setTabela] = useState({
+    idTabela: null, nomeTabela: "",
+  });
+
+  // ─── Carrega dados ao abrir ───
   useEffect(() => {
-    if (isOpen && clienteId) {
-      buscarClientePorId(clienteId)
-        .then((data) => {
-          // Buscando estritamente as propriedades correspondentes
-          setCnpj(data.cnpj || "");
-          setRazaoSocial(data.razaoSocial || "");
-          setTelContato(data.telContato || "");
-        })
-        .catch(() => setErro("Erro ao carregar dados do cliente."));
-    }
-  }, [isOpen, clienteId]);
-
-  // Função simples para limpar pontuações se o seu banco salvar apenas números
-  function apenasNumeros(valor) {
-    return valor.replace(/\D/g, "");
-  }
-
-  async function handleSubmit() {
-    setErro("");
-    
-    if (!razaoSocial.trim()) {
-      setErro("Razão social é obrigatória.");
-      return;
-    }
-
-    if (!cnpj.trim()) {
-      setErro("CNPJ é obrigatório.");
-      return;
-    }
+    if (!isOpen || !clienteId) return;
 
     setLoading(true);
-    try {
-      await atualizarCliente(clienteId, {
-        // Use apenasNumeros(cnpj) caso seu back-end espere apenas os 14 dígitos limpos
-        cnpj: cnpj.trim(), 
-        razaoSocial: razaoSocial.trim(),
-        telContato: telContato.trim(),
-      });
-      
-      onSuccess?.();
-      handleClose();
-    } catch (error) {
-      // Captura a mensagem real enviada pelo Spring Boot (se houver)
-      const mensagemServidor = error.response?.data?.message || error.response?.data[0]?.interpolatedMessage;
-      setErro(mensagemServidor || "Erro ao atualizar cliente. Verifique os dados.");
-    } finally {
-      setLoading(false);
-    }
-  }
+    setStep(1);
 
-  function handleClose() {
-    setCnpj("");
-    setRazaoSocial("");
-    setTelContato("");
-    setErro("");
-    onClose();
-  }
+    Promise.all([
+      fetch(`${API_URL}/tabelas-precos`).then((r) => r.json()),
+      fetch(`${API_URL}/clientes/${clienteId}`).then((r) => r.json()),
+    ])
+      .then(([tabelasData, cliente]) => {
+        setTabelasDisponiveis(Array.isArray(tabelasData) ? tabelasData : []);
+
+        setDadosPessoais({
+          cnpj: cliente.cnpj ?? "",
+          razaoSocial: cliente.razaoSocial ?? "",
+          telContato: cliente.telContato ?? "",
+        });
+
+        const end = cliente.endereco ?? {};
+        setIdEndereco(end.idEndereco ?? null);
+        setEndereco({
+          cep: end.cep ?? "",
+          bairro: end.bairro ?? "",
+          logradouro: end.logradouro ?? "",
+          numero: end.numero ?? "",
+          municipio: end.cidade ?? "",
+          uf: end.estado ?? "",
+          complemento: end.complemento ?? "",
+        });
+
+        const tp = cliente.tabelaPreco;
+        if (tp) {
+          setTabela({ idTabela: tp.idTabela, nomeTabela: tp.nomeTabela });
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [isOpen, clienteId]);
 
   if (!isOpen) return null;
 
+  // ─── Busca CEP ───
+  const buscarCep = async (cep) => {
+    const cepLimpo = cep.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) return;
+    setCepLoading(true);
+    setCepErro("");
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await res.json();
+      if (data.erro) { setCepErro("CEP não encontrado."); return; }
+      setEndereco((prev) => ({
+        ...prev,
+        bairro: data.bairro || "",
+        logradouro: data.logradouro || "",
+        municipio: data.localidade || "",
+        uf: data.uf || "",
+      }));
+    } catch {
+      setCepErro("Erro ao buscar CEP.");
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  // ─── Navegação ───
+  const handleNext = () => {
+    if (step === 1) {
+      if (!dadosPessoais.razaoSocial || !dadosPessoais.cnpj || !dadosPessoais.telContato) {
+        alert("Preencha todos os campos obrigatórios antes de continuar.");
+        return;
+      }
+    }
+    if (step === 2) {
+      if (!endereco.cep || !endereco.bairro || !endereco.logradouro || !endereco.numero || !endereco.municipio || !endereco.uf) {
+        alert("Preencha todos os campos de endereço, incluindo o número.");
+        return;
+      }
+    }
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  };
+
+  const handleBack = () => setStep((s) => Math.max(s - 1, 1));
+
+  // ─── Salvar ───
+  const handleFinish = async () => {
+    try {
+      // 1. Atualiza endereço
+      const enderecoPayload = {
+        estado: endereco.uf,
+        cidade: endereco.municipio,
+        cep: endereco.cep.replace(/\D/g, ""),
+        logradouro: endereco.logradouro,
+        complemento: endereco.complemento || null,
+        bairro: endereco.bairro,
+        numero: endereco.numero,
+      };
+
+      const resEndereco = await fetch(`${API_URL}/enderecos/${idEndereco}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(enderecoPayload),
+      });
+      if (!resEndereco.ok) throw new Error("Erro ao atualizar endereço");
+
+      // 2. Atualiza cliente (cnpj, razaoSocial, telContato + ids de referência)
+      const clientePayload = {
+        cnpj: dadosPessoais.cnpj.replace(/\D/g, ""),
+        razaoSocial: dadosPessoais.razaoSocial,
+        telContato: dadosPessoais.telContato.replace(/\D/g, ""),
+        idEndereco: idEndereco,
+        idTabelaPreco: tabela.idTabela,
+      };
+
+      const resCliente = await fetch(`${API_URL}/clientes/${clienteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clientePayload),
+      });
+      if (!resCliente.ok) throw new Error("Erro ao atualizar cliente");
+
+      onClose();
+      onSuccess?.();
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.modalOverlay}>
+        <div className={`${styles.modal} ${isClosing ? styles.closing : ""}`}>
+          <p style={{ textAlign: "center", padding: "2rem" }}>Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${styles.modalOverlay} ${isClosing ? styles.fadeOut : styles.fadeIn}`}>
-      <div className={`${styles.modalBox} ${isClosing ? styles.slideOut : styles.slideIn}`}>
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitulo}>Editar Cliente</h2>
-          <button className={styles.modalFechar} onClick={handleClose}>✕</button>
-        </div>
+    <div className={styles.modalOverlay}>
+      <div className={`${styles.modal} ${isClosing ? styles.closing : ""}`}>
 
-        <div className={styles.modalBody}>
-          <label className={styles.label}>Razão Social</label>
-          <input
-            className={styles.input}
-            placeholder="Nome da empresa"
-            value={cnpj}
-            onChange={(e) => setCnpj(e.target.value)}
-          />
+        {/* ETAPA 1 — Dados do cliente */}
+        {step === 1 && (
+          <>
+            <h2 className={styles.modalTitle}>✏️ Editar cliente ✏️</h2>
 
-          <label className={styles.label}>CNPJ</label>
-          <input
-            className={styles.input}
-            placeholder="00.000.000/0000-00"
-            value={razaoSocial}
-            onChange={(e) => setRazaoSocial(e.target.value)}
-          />
+            <div className={styles.campos}>
+              <span>Razão Social</span>
+              <input className={styles.inputs} type="text"
+                value={dadosPessoais.razaoSocial}
+                onChange={(e) => setDadosPessoais({ ...dadosPessoais, razaoSocial: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>CNPJ</span>
+              <input className={styles.inputs} type="text"
+                value={dadosPessoais.cnpj}
+                onChange={(e) => setDadosPessoais({ ...dadosPessoais, cnpj: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>Telefone de Contato</span>
+              <input className={styles.inputs} type="text"
+                value={dadosPessoais.telContato}
+                onChange={(e) => setDadosPessoais({ ...dadosPessoais, telContato: e.target.value })} />
+            </div>
 
-          <label className={styles.label}>Telefone de Contato</label>
-          <input
-            className={styles.input}
-            placeholder="(11) 99999-9999"
-            value={telContato}
-            onChange={(e) => setTelContato(e.target.value)}
-          />
+            <button className={styles.btn_proxima_pagina} onClick={handleNext}>Próxima página</button>
+            <button className={styles.btn_fechar} onClick={onClose}>Fechar</button>
+          </>
+        )}
 
-          {erro && <p className={styles.erroMsg}>{erro}</p>}
-        </div>
+        {/* ETAPA 2 — Endereço */}
+        {step === 2 && (
+          <>
+            <h2 className={styles.modalTitle}>✏️ Editar cliente ✏️</h2>
 
-        <div className={styles.modalFooter}>
-          <button className={styles.btnCancelar} onClick={handleClose}>Cancelar</button>
-          <button className={styles.btnSalvar} onClick={handleSubmit} disabled={loading}>
-            {loading ? "Salvando..." : "Salvar"}
-          </button>
-        </div>
+            <div className={styles.campos}>
+              <span>CEP</span>
+              <input className={styles.inputs} type="text" value={endereco.cep}
+                onChange={(e) => { setEndereco({ ...endereco, cep: e.target.value }); setCepErro(""); }}
+                onBlur={(e) => buscarCep(e.target.value)} />
+              {cepLoading && <span style={{ fontSize: "0.8rem", color: "#888" }}>Buscando CEP...</span>}
+              {cepErro && <span style={{ fontSize: "0.8rem", color: "red" }}>{cepErro}</span>}
+            </div>
+            <div className={styles.campos}>
+              <span>Bairro</span>
+              <input className={styles.inputs} type="text" value={endereco.bairro}
+                onChange={(e) => setEndereco({ ...endereco, bairro: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>Logradouro</span>
+              <input className={styles.inputs} type="text" value={endereco.logradouro}
+                onChange={(e) => setEndereco({ ...endereco, logradouro: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>Número</span>
+              <input className={styles.inputs} type="text" value={endereco.numero}
+                onChange={(e) => setEndereco({ ...endereco, numero: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>Complemento</span>
+              <input className={styles.inputs} type="text" value={endereco.complemento}
+                onChange={(e) => setEndereco({ ...endereco, complemento: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>Município</span>
+              <input className={styles.inputs} type="text" value={endereco.municipio}
+                onChange={(e) => setEndereco({ ...endereco, municipio: e.target.value })} />
+            </div>
+            <div className={styles.campos}>
+              <span>UF</span>
+              <input className={styles.inputs} type="text" maxLength={2} value={endereco.uf}
+                onChange={(e) => setEndereco({ ...endereco, uf: e.target.value.toUpperCase() })} />
+            </div>
+
+            <div className={styles.btns_back_prox}>
+              <button className={styles.btn_fechar} onClick={handleBack}>Voltar</button>
+              <button className={styles.btn_proxima_pagina} onClick={handleNext}>Próx. página</button>
+            </div>
+            <button className={styles.btn_fechar} onClick={onClose}>Fechar</button>
+          </>
+        )}
+
+        {/* ETAPA 3 — Tabela de preço */}
+        {step === 3 && (
+          <>
+            <h2 className={styles.modalTitle}>✏️ Editar cliente ✏️</h2>
+
+            <div className={styles.campos}>
+              <span>Tabela de preço</span>
+              <CustomSelect
+                placeholder="Selecione a tabela"
+                options={tabelasDisponiveis.filter((t) => t.ativa).map((t) => t.nomeTabela)}
+                value={tabela.nomeTabela}
+                onChange={(nomeTabela) => {
+                  const selecionada = tabelasDisponiveis.find((t) => t.nomeTabela === nomeTabela);
+                  setTabela({ nomeTabela, idTabela: selecionada?.idTabela ?? null });
+                }}
+              />
+            </div>
+
+            <div className={styles.btns_back_prox}>
+              <button className={styles.btn_fechar} onClick={handleBack}>Voltar</button>
+              <button className={styles.btn_proxima_pagina} onClick={handleFinish}>Salvar</button>
+            </div>
+            <button className={styles.btn_fechar} onClick={onClose}>Fechar</button>
+          </>
+        )}
+
       </div>
     </div>
   );
