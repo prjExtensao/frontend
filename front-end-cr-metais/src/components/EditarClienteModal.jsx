@@ -40,7 +40,7 @@ export default function EditarClienteModal({ isOpen, isClosing, onClose, cliente
       fetch(`${API_URL}/clientes/${clienteId}`).then((r) => r.json()),
     ])
       .then(([tabelasData, cliente]) => {
-        setTabelasDisponiveis(Array.isArray(tabelasData) ? tabelasData : []);
+        setTabelasDisponiveis(Array.isArray(tabelasData) ? tabelasData.filter((t) => t.ativa) : []);
 
         setDadosPessoais({
           cnpj: cliente.cnpj ?? "",
@@ -143,6 +143,7 @@ export default function EditarClienteModal({ isOpen, isClosing, onClose, cliente
         idEndereco: idEndereco,
         idTabelaPreco: tabela.idTabela,
       };
+      console.log("📦 Cliente payload:", clientePayload);
 
       const resCliente = await fetch(`${API_URL}/clientes/${clienteId}`, {
         method: "PUT",
