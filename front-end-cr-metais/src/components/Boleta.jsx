@@ -1,25 +1,44 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "../styles/BoletaStyle.css";
 import api from "../services/apiClient";
-import { FaTrashAlt, FaEdit, FaSearch } from "react-icons/fa";
+import { FaTrashAlt, FaPlus, FaTimes } from "react-icons/fa";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/themes/light.css";
 
+let contadorBoleta = 1;
+
+const criarBoletaVazia = () => ({
+  id: contadorBoleta++,
+  itensBoleta: [],
+  clienteSelecionadoId: "",
+  classeNota: "RETIRADA",
+  tipoNota: "SAÍDA",
+  pagamentoConfirmado: false,
+});
+
 const Boleta = () => {
+  const [boletas, setBoletas] = useState([criarBoletaVazia()]);
+  const [abaAtiva, setAbaAtiva] = useState(1);
+
   const [clientes, setClientes] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [precosTabela, setPrecosTabela] = useState([]);
-  const [itensBoleta, setItensBoleta] = useState([]);
   const [tabelaPorFornecedor, setTabelaPorFornecedor] = useState({});
-
-  const [clienteSelecionadoId, setClienteSelecionadoId] = useState("");
-  const [classeNota, setClasseNota] = useState("RETIRADA");
-  const [tipoNota, setTipoNota] = useState("SAÍDA");
 
   const [carregando, setCarregando] = useState(false);
   const [salvandoNota, setSalvandoNota] = useState(false);
-  const [pagamentoConfirmado, setPagamentoConfirmado] = useState(false);
+
+  const boletaAtual = boletas.find(b => b.id === abaAtiva) || boletas[0];
+
+  const atualizarBoletaAtual = useCallback((atualizacao) => {
+    setBoletas(prev => prev.map(b => {
+      if (b.id !== abaAtiva) return b;
+      return typeof atualizacao === "function" ? atualizacao(b) : { ...b, ...atualizacao };
+    }));
+  }, [abaAtiva]);
+
+  const { itensBoleta, clienteSelecionadoId, classeNota, tipoNota, pagamentoConfirmado } = boletaAtual;
 
   const formatarMoeda = (valor) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor || 0);
@@ -42,19 +61,14 @@ const Boleta = () => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      // if de atalho para adicionar compra (alt z)
       if (event.altKey && event.key.toLowerCase() === "z") {
         event.preventDefault();
         adicionarItem();
       }
-
-      // if de atalho para limpar compra (alt x)
       if (event.altKey && event.key.toLowerCase() === "x") {
         event.preventDefault();
         limparBoleta();
       }
-
-      // if de atalho para confirmar compra (alt c)
       if (event.altKey && event.key.toLowerCase() === "c") {
         event.preventDefault();
         confirmarPagamento();
@@ -62,11 +76,8 @@ const Boleta = () => {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [itensBoleta, clienteSelecionadoId]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [abaAtiva, boletas]);
 
   useEffect(() => {
     const buscarEntidades = async () => {
@@ -98,34 +109,66 @@ const Boleta = () => {
       }
 
       setCarregando(false);
-      setClienteSelecionadoId("");
-      setPagamentoConfirmado(false);
+      atualizarBoletaAtual({ clienteSelecionadoId: "", pagamentoConfirmado: false });
     };
 
     buscarEntidades();
   }, [tipoNota]);
 
-  const adicionarItem = () => {
-    setItensBoleta([...itensBoleta, { idLinha: Date.now(), produtoId: "", peso: "", bags: "", valorUnitario: 0, total: 0 }]);
+  // -- Gerenciamento de abas --
+  const adicionarBoleta = () => {
+    const nova = criarBoletaVazia();
+    setBoletas(prev => [...prev, nova]);
+    setAbaAtiva(nova.id);
   };
 
-  const atualizarItem = (idLinha, campo, valor) => {
-    setItensBoleta(itensBoleta.map(item => {
-      if (item.idLinha !== idLinha) return item;
-      const novoItem = { ...item, [campo]: valor };
-
-      if (campo === "produtoId") {
-        const precoObj = precosTabela.find(p => String(p.fkProduto || p.produtoId) === String(valor));
-        novoItem.valorUnitario = precoObj ? (precoObj.precoProduto || precoObj.preco) : 0;
+  const removerBoleta = (idBoleta) => {
+    setBoletas(prev => {
+      if (prev.length <= 1) return prev;
+      const novas = prev.filter(b => b.id !== idBoleta);
+      if (abaAtiva === idBoleta) {
+        setAbaAtiva(novas[novas.length - 1].id);
       }
+      return novas;
+    });
+  };
 
-      novoItem.total = Number(novoItem.peso || 0) * Number(novoItem.valorUnitario || 0);
-      return novoItem;
+  // -- Ações da boleta ativa --
+  const adicionarItem = () => {
+    atualizarBoletaAtual(b => ({
+      ...b,
+      itensBoleta: [...b.itensBoleta, { idLinha: Date.now(), produtoId: "", peso: "", bags: "", valorUnitario: 0, total: 0 }]
     }));
   };
 
-  const removerItem = (idLinha) => setItensBoleta(itensBoleta.filter(i => i.idLinha !== idLinha));
-  const limparBoleta = () => setItensBoleta([]);
+  const atualizarItem = (idLinha, campo, valor) => {
+    atualizarBoletaAtual(b => ({
+      ...b,
+      itensBoleta: b.itensBoleta.map(item => {
+        if (item.idLinha !== idLinha) return item;
+        const novoItem = { ...item, [campo]: valor };
+
+        if (campo === "produtoId") {
+          const precoObj = precosTabela.find(p => String(p.fkProduto || p.produtoId) === String(valor));
+          novoItem.valorUnitario = precoObj ? (precoObj.precoProduto || precoObj.preco) : 0;
+        }
+
+        novoItem.total = Number(novoItem.peso || 0) * Number(novoItem.valorUnitario || 0);
+        return novoItem;
+      })
+    }));
+  };
+
+  const removerItem = (idLinha) => {
+    atualizarBoletaAtual(b => ({
+      ...b,
+      itensBoleta: b.itensBoleta.filter(i => i.idLinha !== idLinha)
+    }));
+  };
+
+  const limparBoleta = () => {
+    atualizarBoletaAtual({ itensBoleta: [] });
+  };
 
   const resumo = itensBoleta.reduce((acc, item) => ({
     total: acc.total + Number(item.total || 0),
@@ -183,7 +226,7 @@ const Boleta = () => {
       }
 
       limparBoleta();
-      setPagamentoConfirmado(true);
+      atualizarBoletaAtual({ pagamentoConfirmado: true });
     } catch (erro) {
       console.error("Detalhe do erro:", erro.response?.data || erro.message);
     } finally {
@@ -242,142 +285,167 @@ const Boleta = () => {
 
   useEffect(() => {
     document.title = "CR Metais | Boleta"
-  })
+  });
 
   return (
-    <div className="pagina">
-      <div className="conteudo_principal">
-
-        <div className="card_nota">
-          <div className="cabecalho_card">
-            <h2>NOTA DE PAGAMENTO</h2>
-            <div className="btns_cabecalho">
-              <div className="lista_cliente">
-                {carregando ? <span>Carregando...</span> : (
-                  <select
-                    className="seletor_cliente"
-                    value={clienteSelecionadoId}
-                    onChange={(e) => setClienteSelecionadoId(e.target.value)}
-                  >
-                    <option value="" disabled>Selecione o {tipoNota === "ENTRADA" ? "Fornecedor" : "Cliente"}</option>
-                    {clientes.map(c => (
-                      <option key={c.id || c.idCliente || c.idFornecedor} value={c.id || c.idCliente || c.idFornecedor}>
-                        {c.nome || c.razaoSocial}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <button type="button" className="botao_adicionar" onClick={adicionarItem}>ADICIONAR PRODUTO</button>
-              <button type="button" className="botao_adicionar" onClick={limparBoleta} disabled={itensBoleta.length === 0}>REMOVER TODOS</button>
+    <div className="pagina pagina_boleta">
+      {/* === BARRA DE ABAS === */}
+      <div className="boleta_abas_container">
+        <div className="boleta_abas">
+          {boletas.map((b, idx) => (
+            <div
+              key={b.id}
+              className={`boleta_aba ${b.id === abaAtiva ? "boleta_aba--ativa" : ""}`}
+              onClick={() => setAbaAtiva(b.id)}
+            >
+              <span className="boleta_aba_titulo">Boleta {idx + 1}</span>
+              {boletas.length > 1 && (
+                <button
+                  className="boleta_aba_fechar"
+                  onClick={(e) => { e.stopPropagation(); removerBoleta(b.id); }}
+                  title="Excluir boleta"
+                >
+                  <FaTimes />
+                </button>
+              )}
             </div>
-          </div>
-
-          <div className="separacao"></div>
-
-          <div className="rolagem_tabela">
-            <table className="tabela">
-              <thead className="cabecalho_tabela">
-                <tr>
-                  <th>Num</th><th>Produto</th><th>Peso (Kg)</th><th>Valor</th><th>Total</th><th>Qtd. Bags</th><th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {itensBoleta.length === 0 ? (
-                  <tr><td colSpan={7}>Nenhum produto adicionado.</td></tr>
-                ) : (
-                  itensBoleta.map((item, index) => (
-                    <tr key={item.idLinha}>
-                      <td>{index + 1}</td>
-                      <td>
-                        <select
-                          className="select_produto"
-                          value={item.produtoId}
-                          onChange={(e) => atualizarItem(item.idLinha, "produtoId", e.target.value)}
-                        >
-                          <option value="">Selecione</option>
-                          {produtos.map(p => (
-                            <option key={p.id || p.idProduto} value={p.id || p.idProduto}>{p.nome || p.descricao}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <input placeholder="Inserir valor" type="number" min="0" step="0.01" className="inputItem" value={item.peso} onChange={(e) => atualizarItem(item.idLinha, "peso", e.target.value)} />
-                      </td>
-                      <td>{formatarMoeda(item.valorUnitario)}</td>
-                      <td>{formatarMoeda(item.total)}</td>
-                      <td>
-                        <input placeholder="Informar Qtd. Bags" type="number" min="0" step="1" className="inputItem" value={item.bags} onChange={(e) => atualizarItem(item.idLinha, "bags", e.target.value)} />
-                      </td>
-                      <td>
-                        <Tippy content="Excluir fornecedor" theme="light">
-                          <div type="button" onClick={() => removerItem(item.idLinha)}>
-                            <FaTrashAlt className="trashAlt" />
-                          </div>
-                        </Tippy>
-
-
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          ))}
+          <button className="boleta_aba_nova" onClick={adicionarBoleta} title="Nova boleta">
+            <FaPlus />
+          </button>
         </div>
       </div>
 
-      <aside className="conteudo_lateral">
-        <div className="caixa_info">
-          <p className="titulo_lateral">Informações da Nota</p>
-          <div className="lista_info">
-            <div className="linha_info"><span>NOME</span><strong>{nomeCliente}</strong></div>
-            <div className="linha_info"><span>TABELA</span><strong>{nomeTabela}</strong></div>
-            <div className="linha_info">
-              <span>CLASSE</span>
-              <button className="botao_toggle_info" onClick={() => setClasseNota(c => c === "RETIRADA" ? "LOCAL" : "RETIRADA")}>{classeNota}</button>
+      {/* === CONTEÚDO DA BOLETA ATIVA === */}
+      <div className="boleta_conteudo_wrapper">
+        <div className="conteudo_principal">
+          <div className="card_nota">
+            <div className="cabecalho_card">
+              <h2>NOTA DE PAGAMENTO</h2>
+              <div className="btns_cabecalho">
+                <div className="lista_cliente">
+                  {carregando ? <span>Carregando...</span> : (
+                    <select
+                      className="seletor_cliente"
+                      value={clienteSelecionadoId}
+                      onChange={(e) => atualizarBoletaAtual({ clienteSelecionadoId: e.target.value })}
+                    >
+                      <option value="" disabled>Selecione o {tipoNota === "ENTRADA" ? "Fornecedor" : "Cliente"}</option>
+                      {clientes.map(c => (
+                        <option key={c.id || c.idCliente || c.idFornecedor} value={c.id || c.idCliente || c.idFornecedor}>
+                          {c.nome || c.razaoSocial}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <button type="button" className="botao_adicionar" onClick={adicionarItem}>ADICIONAR PRODUTO</button>
+                <button type="button" className="botao_adicionar" onClick={limparBoleta} disabled={itensBoleta.length === 0}>REMOVER TODOS</button>
+              </div>
             </div>
-            <div className="linha_info">
-              <span>TIPO</span>
-              <button className="botao_toggle_info" onClick={() => setTipoNota(t => t === "SAÍDA" ? "ENTRADA" : "SAÍDA")}>{tipoNota}</button>
+
+            <div className="separacao"></div>
+
+            <div className="rolagem_tabela">
+              <table className="tabela">
+                <thead className="cabecalho_tabela">
+                  <tr>
+                    <th>Num</th><th>Produto</th><th>Peso (Kg)</th><th>Valor</th><th>Total</th><th>Qtd. Bags</th><th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itensBoleta.length === 0 ? (
+                    <tr><td colSpan={7}>Nenhum produto adicionado.</td></tr>
+                  ) : (
+                    itensBoleta.map((item, index) => (
+                      <tr key={item.idLinha}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <select
+                            className="select_produto"
+                            value={item.produtoId}
+                            onChange={(e) => atualizarItem(item.idLinha, "produtoId", e.target.value)}
+                          >
+                            <option value="">Selecione</option>
+                            {produtos.map(p => (
+                              <option key={p.id || p.idProduto} value={p.id || p.idProduto}>{p.nome || p.descricao}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <input placeholder="Inserir valor" type="number" min="0" step="0.01" className="inputItem" value={item.peso} onChange={(e) => atualizarItem(item.idLinha, "peso", e.target.value)} />
+                        </td>
+                        <td>{formatarMoeda(item.valorUnitario)}</td>
+                        <td>{formatarMoeda(item.total)}</td>
+                        <td>
+                          <input placeholder="Informar Qtd. Bags" type="number" min="0" step="1" className="inputItem" value={item.bags} onChange={(e) => atualizarItem(item.idLinha, "bags", e.target.value)} />
+                        </td>
+                        <td>
+                          <Tippy content="Excluir fornecedor" theme="light">
+                            <div type="button" onClick={() => removerItem(item.idLinha)}>
+                              <FaTrashAlt className="trashAlt" />
+                            </div>
+                          </Tippy>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <div className="caixa_info caixa_acoes">
-          
-          <div className="card_total">
-            <p className="label_total">Valor Total</p>
-            <p className="valor_total">{formatarMoeda(resumo.total)}</p>
-            <div className="divisor_total" />
-            <div className="detalhes_total">
-              <span>{itensBoleta.length} produto(s)</span>
-              <span>{resumo.bags} bag(s)</span>
-              <span>{resumo.peso.toFixed(2)} Kg</span>
+        <aside className="conteudo_lateral">
+          <div className="caixa_info">
+            <p className="titulo_lateral">Informações da Nota</p>
+            <div className="lista_info">
+              <div className="linha_info"><span>NOME</span><strong>{nomeCliente}</strong></div>
+              <div className="linha_info"><span>TABELA</span><strong>{nomeTabela}</strong></div>
+              <div className="linha_info">
+                <span>CLASSE</span>
+                <button className="botao_toggle_info" onClick={() => atualizarBoletaAtual(b => ({ ...b, classeNota: b.classeNota === "RETIRADA" ? "LOCAL" : "RETIRADA" }))}>{classeNota}</button>
+              </div>
+              <div className="linha_info">
+                <span>TIPO</span>
+                <button className="botao_toggle_info" onClick={() => atualizarBoletaAtual(b => ({ ...b, tipoNota: b.tipoNota === "SAÍDA" ? "ENTRADA" : "SAÍDA" }))}>{tipoNota}</button>
+              </div>
             </div>
           </div>
 
-          <p className="titulo_lateral">Ações da Nota</p>
-          <div className="botoes_acao">
-            <button
-              type="button"
-              className={`botao_confirmar ${pagamentoConfirmado ? "botao_confirmar--confirmado" : ""}`}
-              onClick={pagamentoConfirmado ? () => setPagamentoConfirmado(false) : confirmarPagamento}
-              disabled={salvandoNota}
-            >
-              {salvandoNota ? "SALVANDO..." : (pagamentoConfirmado ? "PAGAMENTO CONFIRMADO ✔" : "CONFIRMAR PAGAMENTO")}
-            </button>
-            <button type="button" onClick={gerarNotaFiscal}>GERAR NOTA FISCAL</button>
-            <button type="button" className="botao_copiar">
-              <span className="texto_copiar">Copiar Nota</span>
-              <span className="icone_copiar texto_copiar">⧉</span>
-            </button>
+          <div className="caixa_info caixa_acoes">
+            
+            <div className="card_total">
+              <p className="label_total">Valor Total</p>
+              <p className="valor_total">{formatarMoeda(resumo.total)}</p>
+              <div className="divisor_total" />
+              <div className="detalhes_total">
+                <span>{itensBoleta.length} produto(s)</span>
+                <span>{resumo.bags} bag(s)</span>
+                <span>{resumo.peso.toFixed(2)} Kg</span>
+              </div>
+            </div>
+
+            <p className="titulo_lateral">Ações da Nota</p>
+            <div className="botoes_acao">
+              <button
+                type="button"
+                className={`botao_confirmar ${pagamentoConfirmado ? "botao_confirmar--confirmado" : ""}`}
+                onClick={pagamentoConfirmado ? () => atualizarBoletaAtual({ pagamentoConfirmado: false }) : confirmarPagamento}
+                disabled={salvandoNota}
+              >
+                {salvandoNota ? "SALVANDO..." : (pagamentoConfirmado ? "PAGAMENTO CONFIRMADO ✔" : "CONFIRMAR PAGAMENTO")}
+              </button>
+              <button type="button" onClick={gerarNotaFiscal}>GERAR NOTA FISCAL</button>
+              <button type="button" className="botao_copiar">
+                <span className="texto_copiar">Copiar Nota</span>
+                <span className="icone_copiar texto_copiar">⧉</span>
+              </button>
+            </div>
           </div>
-        </div>
-
-
-      </aside>
+        </aside>
+      </div>
     </div>
   );
 };
