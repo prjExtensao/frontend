@@ -271,3 +271,143 @@ h1 {
 /* .headerSortable:hover {
   opacity: 0.8;
 } */
+
+
+/* ── ADICIONAR NO FINAL DO Resumo.module.css ── */
+
+/* Barra superior: busca + select lado a lado */
+.barraSuperior {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Wrapper do select de cliente */
+.clienteSelectWrapper {
+  flex-shrink: 0;
+}
+
+/* Select de cliente — mesmo estilo do selectHistorico */
+.clienteSelect {
+  padding: 0.6rem 1.2rem;
+  background: #020618;
+  color: white;
+  font-size: 0.9dvw;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  border-radius: 0.9rem;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.clienteSelect:hover {
+  background: #f8fafc;
+  color: #020618;
+  box-shadow: inset 0 0 0 3px #020618;
+}
+
+/* Card de info do cliente selecionado */
+.clienteInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid gainsboro;
+  border-radius: 1rem;
+  background: #f8fafc;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.clienteInfoTitulo {
+  font-size: 0.85rem;
+  color: #314158;
+  font-weight: 500;
+}
+
+.clienteInfoNome {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #020618;
+}
+
+.clienteInfoSub {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+/* ── SUBSTITUIR as classes antigas e ADICIONAR no final do Resumo.module.css ── */
+
+/* Barra de título + select lado a lado */
+.tituloBarra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 2rem 0 1rem 0;
+}
+
+/* Remove o padding do .titulo original quando dentro do tituloBarra */
+.tituloBarra .titulo {
+  padding: 0;
+}
+
+/* Wrapper do label + select */
+.destinoWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.destinoLabel {
+  font-size: 0.9dvw;
+  font-weight: 500;
+  color: #314158;
+  white-space: nowrap;
+}
+
+/* Select de destino */
+.clienteSelect {
+  padding: 0.6rem 1.4rem;
+  background: #020618;
+  color: white;
+  font-size: 0.9dvw;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  border-radius: 0.9rem;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+/* Hover sem escurecer os valores da tabela */
+.clienteSelect:hover {
+  background: #f8fafc;
+  color: #020618;
+  box-shadow: inset 0 0 0 2px #020618;
+}
+
+.clienteSelect option {
+  background: white;
+  color: #020618;
+}
+
+/* Remove classes antigas que não são mais usadas */
+.barraSuperior,
+.clienteSelectWrapper,
+.clienteInfo,
+.clienteInfoTitulo,
+.clienteInfoNome,
+.clienteInfoSub {
+  display: none;
+}

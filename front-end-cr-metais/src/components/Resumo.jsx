@@ -1,226 +1,189 @@
 import styles from "../styles/Resumo.module.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { api } from "../services/resumoService";
 import { FaSearch } from "react-icons/fa";
 
-// const EstoqueHeader = () => {
-//   return (
-//     <div className={styles.estoqueHeader}>
-//       <span className={styles.estoqueProduto}>Produto</span>
-//       <span className={styles.estoquePeso}>Peso (Kg)</span>
-//       <span className={styles.estoqueValor}>Valor Unitário (R$)</span>
-//       <span className={styles.estoqueTotal}>Total (R$)</span>
-//       <span className={styles.estoqueDestino}>Destino</span>
-//     </div>
-//   );
-// };
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatBRL(valor) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatKg(valor) {
+  return `${valor.toLocaleString("pt-BR")} Kg`;
+}
+
+// ─── Header da tabela ─────────────────────────────────────────────────────────
 
 const EstoqueHeader = ({ ordenarPor, ordenacao }) => {
-  const renderSeta = (campo) => {
-    if (ordenacao.campo !== campo) {
-      return "↕";
-    }
-
+  const seta = (campo) => {
+    if (ordenacao.campo !== campo) return "↕";
     return ordenacao.direcao === "asc" ? "↑" : "↓";
   };
 
   return (
     <div className={styles.estoqueHeader}>
-      <span
-        className={styles.headerSortable}
-        onClick={() => ordenarPor("nome")}
-      >
-        Produto {renderSeta("nome")}
+      <span className={styles.headerSortable} onClick={() => ordenarPor("nome")}>
+        Produto {seta("nome")}
       </span>
-
-      <span
-        className={styles.headerSortable}
-        onClick={() => ordenarPor("peso")}
-      >
-        Peso (Kg) {renderSeta("peso")}
+      <span className={styles.headerSortable} onClick={() => ordenarPor("peso")}>
+        Peso (Kg) {seta("peso")}
       </span>
-
-      <span
-        className={styles.headerSortable}
-        onClick={() => ordenarPor("valor")}
-      >
-        Valor Unitário (R$) {renderSeta("valor")}
+      <span className={styles.headerSortable} onClick={() => ordenarPor("valor")}>
+        Valor Unitário (R$) {seta("valor")}
       </span>
-
-      <span
-        className={styles.headerSortable}
-        onClick={() => ordenarPor("total")}
-      >
-        Total (R$) {renderSeta("total")}
+      <span className={styles.headerSortable} onClick={() => ordenarPor("total")}>
+        Total (R$) {seta("total")}
       </span>
-
-      <span
-        className={styles.headerSortable}
-        onClick={() => ordenarPor("destino")}
-      >
-        Destino {renderSeta("destino")}
+      <span className={styles.headerSortable} onClick={() => ordenarPor("destino")}>
+        Destino {seta("destino")}
       </span>
     </div>
   );
 };
 
-const EstoqueItem = ({ produto, isEven }) => {
-  const total = produto.peso * produto.valor;
+// ─── Item da tabela ───────────────────────────────────────────────────────────
+
+const EstoqueItem = ({ produto, isEven, precoUnitario, destino }) => {
+  const total = precoUnitario != null
+    ? produto.materialDisponivel * precoUnitario
+    : null;
 
   return (
-    <div
-      className={`${styles.estoqueLine} ${
-        isEven ? styles.linhaPar : styles.linhaImpar
-      }`}
-    >
+    <div className={`${styles.estoqueLine} ${isEven ? styles.linhaPar : styles.linhaImpar}`}>
       <div className={styles.estoqueItem}>
         <span className={styles.estoqueProduto}>{produto.nome}</span>
-        <span className={styles.estoquePeso}>
-          {`${produto.peso.toLocaleString("pt-BR")} Kg`}
-        </span>
+        <span className={styles.estoquePeso}>{formatKg(produto.materialDisponivel)}</span>
         <span className={styles.estoqueValor}>
-          {produto.valor.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
+          {precoUnitario != null ? formatBRL(precoUnitario) : "—"}
         </span>
         <span className={styles.estoqueTotal}>
-          {total.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
+          {total != null ? formatBRL(total) : "—"}
         </span>
-        <span className={styles.estoqueDestino}>
-          {produto.destino || " - "}
-        </span>
+        <span className={styles.estoqueDestino}>{destino || "—"}</span>
       </div>
-      <div className={styles.divisao}></div>
+      <div className={styles.divisao} />
     </div>
   );
 };
 
-const ResumoCard = ({ titulo, valor }) => {
-  return (
-    <div className={styles.resumoCard}>
-      <span className={styles.resumoTitulo}>{titulo}</span>
-      <h3>{valor}</h3>
-    </div>
-  );
-};
+// ─── Card lateral ─────────────────────────────────────────────────────────────
+
+const ResumoCard = ({ titulo, valor }) => (
+  <div className={styles.resumoCard}>
+    <span className={styles.resumoTitulo}>{titulo}</span>
+    <h3>{valor}</h3>
+  </div>
+);
+
+// ─── Componente principal ─────────────────────────────────────────────────────
 
 const Resumo = () => {
-  const [resumo, setResumo] = useState(null);
-  const [busca, setBusca] = useState("");
+  const [resumo, setResumo]         = useState(null);
+  const [busca, setBusca]           = useState("");
+  const [clienteSel, setClienteSel] = useState("");
+  const [ordenacao, setOrdenacao]   = useState({ campo: "nome", direcao: "asc" });
 
-  const [ordenacao, setOrdenacao] = useState({
-    campo: "nome",
-    direcao: "asc",
-  });
-
-  useEffect(() => {
-    document.title = "CR Metais | Resumo";
-  }, []);
+  useEffect(() => { document.title = "CR Metais | Resumo"; }, []);
 
   useEffect(() => {
-    api
-      .get("/resumos")
-      .then((res) => {
-        console.log("Resposta da API:", res.data);
-        setResumo(res.data);
-      })
-      .catch((err) => console.error("Erro ao buscar produtos:", err));
+    api.get("/resumos")
+      .then((res) => setResumo(res.data))
+      .catch((err) => console.error("Erro ao buscar resumo:", err));
   }, []);
 
-  if (!resumo) {
-    return <p>Carregando...</p>;
-  }
+  // Mapa: nomeTabela → { nomeProduto → precoProduto }
+  const tabelaMap = useMemo(() => {
+    if (!resumo?.tabelasPreco) return {};
+    const map = {};
+    for (const item of resumo.tabelasPreco) {
+      if (!map[item.nomeTabela]) map[item.nomeTabela] = {};
+      map[item.nomeTabela][item.nomeProduto] = item.precoProduto;
+    }
+    return map;
+  }, [resumo]);
+
+  // Preços do cliente selecionado
+  const precosCliente = useMemo(() => {
+    if (!clienteSel) return {};
+    const chave = Object.keys(tabelaMap).find(
+      (k) => k.toLowerCase() === clienteSel.toLowerCase()
+    );
+    return chave ? tabelaMap[chave] : {};
+  }, [clienteSel, tabelaMap]);
+
+  const ordenarPor = (campo) => {
+    setOrdenacao((prev) => ({
+      campo,
+      direcao: prev.campo === campo && prev.direcao === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  if (!resumo) return <p>Carregando...</p>;
 
   const termo = busca.toLowerCase().trim();
 
-  // Preserva o índice original para manter as listras corretas após o filtro
-  // const produtosFiltrados = resumo.produtos
-  //   .map((produto, originalIndex) => ({ produto, originalIndex }))
-  //   .filter(({ produto }) =>
-  //     !termo || produto.nome?.toLowerCase().includes(termo)
-  //   );
-
   const produtosFiltrados = resumo.produtos
-  .filter(
-    (produto) =>
-      !termo || produto.nome?.toLowerCase().includes(termo)
-  )
-  .sort((a, b) => {
-    const { campo, direcao } = ordenacao;
+    .filter((p) => !termo || p.nome?.toLowerCase().includes(termo))
+    .sort((a, b) => {
+      const { campo, direcao } = ordenacao;
+      let va, vb;
+      switch (campo) {
+        case "nome":
+          va = a.nome?.toLowerCase() || "";
+          vb = b.nome?.toLowerCase() || "";
+          break;
+        case "peso":
+          va = a.materialDisponivel;
+          vb = b.materialDisponivel;
+          break;
+        case "valor":
+          va = precosCliente[a.nome] ?? -1;
+          vb = precosCliente[b.nome] ?? -1;
+          break;
+        case "total":
+          va = a.materialDisponivel * (precosCliente[a.nome] ?? 0);
+          vb = b.materialDisponivel * (precosCliente[b.nome] ?? 0);
+          break;
+        default:
+          return 0;
+      }
+      if (va < vb) return direcao === "asc" ? -1 : 1;
+      if (va > vb) return direcao === "asc" ? 1 : -1;
+      return 0;
+    });
 
-    let valorA;
-    let valorB;
 
-    switch (campo) {
-      case "nome":
-        valorA = a.nome?.toLowerCase() || "";
-        valorB = b.nome?.toLowerCase() || "";
-        break;
-
-      case "peso":
-        valorA = a.peso;
-        valorB = b.peso;
-        break;
-
-      case "valor":
-        valorA = a.valor;
-        valorB = b.valor;
-        break;
-
-      case "total":
-        valorA = a.peso * a.valor;
-        valorB = b.peso * b.valor;
-        break;
-
-      case "destino":
-        valorA = a.destino?.toLowerCase() || "";
-        valorB = b.destino?.toLowerCase() || "";
-        break;
-
-      default:
-        return 0;
-    }
-
-    if (valorA < valorB) {
-      return direcao === "asc" ? -1 : 1;
-    }
-
-    if (valorA > valorB) {
-      return direcao === "asc" ? 1 : -1;
-    }
-
-    return 0;
-  });
-
-  // Ordenação  
-  const ordenarPor = (campo) => {
-    let direcao = "asc";
-
-    if (
-      ordenacao.campo === campo &&
-      ordenacao.direcao === "asc"
-    ) {
-      direcao = "desc";
-    }
-
-    setOrdenacao({ campo, direcao });
-  }; 
 
   return (
     <div className={styles.conteudo}>
-      <div className={styles.titulo}>
-        <span className={styles.estoqueTitulo}>Estoque atual</span>
-        <span className={styles.subtitulo}>
-          Visão geral dos produtos em estoque
-        </span>
+
+      {/* ── Título + select de destino ── */}
+      <div className={styles.tituloBarra}>
+        <div className={styles.titulo}>
+          <span className={styles.estoqueTitulo}>Estoque atual</span>
+          <span className={styles.subtitulo}>Visão geral dos produtos em estoque</span>
+        </div>
+
+        <div className={styles.destinoWrapper}>
+          <span className={styles.destinoLabel}>Selecione o destino</span>
+          <select
+            className={styles.clienteSelect}
+            value={clienteSel}
+            onChange={(e) => setClienteSel(e.target.value)}
+          >
+            <option value="">—</option>
+            {resumo.clientes.map((c) => (
+              <option key={c.nome} value={c.nome}>{c.nome}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className={styles.containers}>
         <div className={styles.leftSide}>
+
+          {/* Barra de busca */}
           <div className={styles.searchWrapper}>
             <FaSearch className={styles.searchIcon} />
             <input
@@ -241,19 +204,18 @@ const Resumo = () => {
             )}
           </div>
 
+          {/* Tabela */}
           <div className={styles.estoqueGrid}>
-            <EstoqueHeader
-              ordenarPor={ordenarPor}
-              ordenacao={ordenacao}
-            />
-
+            <EstoqueHeader ordenarPor={ordenarPor} ordenacao={ordenacao} />
             <div className={styles.estoqueLista}>
               {produtosFiltrados.length > 0 ? (
                 produtosFiltrados.map((produto, index) => (
                   <EstoqueItem
-                    key={index}
+                    key={produto.nome}
                     produto={produto}
                     isEven={index % 2 === 0}
+                    precoUnitario={clienteSel ? (precosCliente[produto.nome] ?? null) : null}
+                    destino={clienteSel || null}
                   />
                 ))
               ) : (
@@ -265,29 +227,24 @@ const Resumo = () => {
           </div>
         </div>
 
+        {/* Cards laterais — apenas os 4 originais, sem card extra */}
         <div className={styles.rightSide}>
           <div className={styles.containerCards}>
             <ResumoCard
               titulo="Total Aplicado:"
-              valor={resumo.totalAplicado.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
+              valor={formatBRL(resumo.totalAplicado)}
             />
             <ResumoCard
               titulo="Peso Total:"
-              valor={`${resumo.pesoTotal.toLocaleString("pt-BR")} Kg`}
+              valor={formatKg(resumo.pesoTotal)}
             />
             <ResumoCard
               titulo="Pg Notas (hoje):"
-              valor={resumo.notasHoje.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
+              valor={formatBRL(resumo.notasHoje)}
             />
             <ResumoCard
               titulo="Peso Kg (hoje):"
-              valor={`${resumo.pesoHoje.toLocaleString("pt-BR")} Kg`}
+              valor={formatKg(resumo.pesoHoje)}
             />
           </div>
         </div>
