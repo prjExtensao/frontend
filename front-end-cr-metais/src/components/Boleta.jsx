@@ -18,18 +18,16 @@ const criarBoletaVazia = () => ({
 });
 
 const Boleta = () => {
-  // ─── Inicialização segura: abaAtiva sempre bate com o id real da primeira boleta
-  const [boletas, setBoletas] = useState(() => {
-    const primeira = criarBoletaVazia();
-    return [primeira];
-  });
-  const [abaAtiva, setAbaAtiva] = useState(() => boletas[0].id);
+  // Inicialização padrão segura
+  const [boletas, setBoletas] = useState([criarBoletaVazia()]);
+  const [abaAtiva, setAbaAtiva] = useState(boletas[0].id);
 
   const [clientes, setClientes] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [precosTabela, setPrecosTabela] = useState([]);
   const [tabelaPorFornecedor, setTabelaPorFornecedor] = useState({});
   const [carregando, setCarregando] = useState(false);
+  const [carregandoCache, setCarregandoCache] = useState(true); // Trava a tela enquanto lê o Redis
   const [salvandoNota, setSalvandoNota] = useState(false);
 
   const abaAtivaRef = useRef(abaAtiva);
@@ -38,8 +36,8 @@ const Boleta = () => {
   useEffect(() => { abaAtivaRef.current = abaAtiva; }, [abaAtiva]);
   useEffect(() => { boletasRef.current  = boletas;  }, [boletas]);
 
-  const boletaAtual = boletas.find(b => b.id === abaAtiva) ?? boletas[0];
-  const { itensBoleta, clienteSelecionadoId, classeNota, tipoNota, pagamentoConfirmado } = boletaAtual;
+  const boletaAtual = boletas.find(b => b.id === abaAtiva) ?? boletas[0] ?? criarBoletaVazia();
+  const { itensBoleta = [], clienteSelecionadoId = "", classeNota = "RETIRADA", tipoNota = "SAÍDA", pagamentoConfirmado = false } = boletaAtual;
 
   const formatarMoeda = (valor) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor || 0);
@@ -53,14 +51,67 @@ const Boleta = () => {
   }, []);
 
   const atualizarBoletaAtual = useCallback((fn) => {
-    // Lê abaAtivaRef para nunca usar closure velha
     setBoletas(prev => prev.map(b => {
       if (b.id !== abaAtivaRef.current) return b;
       return typeof fn === "function" ? fn(b) : { ...b, ...fn };
     }));
   }, []);
 
-  // ─── Carga inicial ───────────────────────────────────────────────────────
+  // ─── 🔄 CARGA INICIAL DO RASCUNHO (Redis) ─────────────────────────────────
+  useEffect(() => {
+    const buscarRascunhoRedis = async () => {
+      try {
+        const res = await api.get("/boletas/rascunho");
+        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          // Trata os dados de forma defensiva para evitar estouros de UI
+          const boletasTratadas = res.data.map(b => ({
+            ...b,
+            id: Number(b.id),
+            itensBoleta: Array.isArray(b.itensBoleta) ? b.itensBoleta : [],
+            clienteSelecionadoId: b.clienteSelecionadoId || "",
+            classeNota: b.classeNota || "RETIRADA",
+            tipoNota: b.tipoNota || "SAÍDA",
+            pagamentoConfirmado: !!b.pagamentoConfirmado
+          }));
+
+          setBoletas(boletasTratadas);
+          setAbaAtiva(boletasTratadas[0].id);
+
+          // Atualiza o sequenciador global para novas abas não colidirem IDs
+          const maiorId = Math.max(...boletasTratadas.map(b => b.id));
+          contadorBoleta = maiorId + 1;
+        }
+      } catch (err) {
+        console.error("Erro ao resgatar rascunho do Redis", err);
+      } finally {
+        setCarregandoCache(false); // Libera o esqueleto/carregamento da tela
+      }
+    };
+    buscarRascunhoRedis();
+  }, []);
+
+  // ─── 💾 AUTO-SALVAMENTO COM DEBOUNCE (Redis) ─────────────────────────────
+  useEffect(() => {
+    if (carregandoCache) return; // Impede que salve dados vazios por cima antes de ler o Redis
+
+    const sincronizarComRedis = async () => {
+      try {
+        await api.post("/boletas/rascunho", boletas);
+        console.log("Rascunho sincronizado no Redis automaticamente.");
+      } catch (err) {
+        console.error("Falha ao salvar rascunho automaticamente", err);
+      }
+    };
+
+    // Dispara a sincronização 1 segundo após o usuário parar de interagir
+    const delayDebounce = setTimeout(() => {
+      sincronizarComRedis();
+    }, 1000);
+
+    return () => clearTimeout(delayDebounce);
+  }, [boletas, carregandoCache]);
+
+  // ─── Carga inicial (Produtos e Tabelas) ───────────────────────────────────
   useEffect(() => {
     const buscar = async () => {
       try {
@@ -79,6 +130,8 @@ const Boleta = () => {
 
   // ─── Carga de clientes/fornecedores ──────────────────────────────────────
   useEffect(() => {
+    if (carregandoCache) return; // Bloqueia limpezas acidentais de estado durante o load inicial
+    
     const buscarEntidades = async () => {
       setCarregando(true);
       const endpoint = tipoNota === "ENTRADA" ? "fornecedores" : "clientes";
@@ -107,17 +160,14 @@ const Boleta = () => {
         setTabelaPorFornecedor({});
       }
 
-      // Reset cliente da boleta ativa — usa ref, sem closure stale
-      setBoletas(prev => prev.map(b =>
-        b.id !== abaAtivaRef.current ? b : { ...b, clienteSelecionadoId: "", pagamentoConfirmado: false }
-      ));
+      atualizarBoletaAtual({ clienteSelecionadoId: "", pagamentoConfirmado: false });
       setCarregando(false);
     };
 
     buscarEntidades();
-  }, [tipoNota]); // só tipoNota — sem atualizarBoletaAtual nas deps
+  }, [tipoNota, carregandoCache]);
 
-  // ─── Atalhos de teclado (refs — sem stale closure) ───────────────────────
+  // ─── Atalhos de teclado (refs) ───────────────────────────────────────────
   useEffect(() => {
     const handle = (e) => {
       if (!e.altKey) return;
@@ -128,7 +178,7 @@ const Boleta = () => {
         setBoletas(prev => prev.map(b =>
           b.id !== abaAtivaRef.current ? b : {
             ...b,
-            itensBoleta: [...b.itensBoleta, { idLinha: Date.now(), produtoId: "", peso: "", bags: "", valorUnitario: 0, total: 0 }],
+            itensBoleta: [...(b.itensBoleta || []), { idLinha: Date.now(), produtoId: "", peso: "", bags: "", valorUnitario: 0, total: 0 }],
           }
         ));
       }
@@ -147,7 +197,7 @@ const Boleta = () => {
 
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, []); // sem deps — tudo via refs
+  }, []);
 
   // ─── Abas ────────────────────────────────────────────────────────────────
   const adicionarBoleta = () => {
@@ -169,14 +219,14 @@ const Boleta = () => {
   const adicionarItem = () => {
     atualizarBoletaAtual(b => ({
       ...b,
-      itensBoleta: [...b.itensBoleta, { idLinha: Date.now(), produtoId: "", peso: "", bags: "", valorUnitario: 0, total: 0 }],
+      itensBoleta: [...(b.itensBoleta || []), { idLinha: Date.now(), produtoId: "", peso: "", bags: "", valorUnitario: 0, total: 0 }],
     }));
   };
 
   const atualizarItem = (idLinha, campo, valor) => {
     atualizarBoletaAtual(b => ({
       ...b,
-      itensBoleta: b.itensBoleta.map(item => {
+      itensBoleta: (b.itensBoleta || []).map(item => {
         if (item.idLinha !== idLinha) return item;
         const novo = { ...item, [campo]: valor };
         if (campo === "produtoId") {
@@ -189,20 +239,24 @@ const Boleta = () => {
     }));
   };
 
-  const removerItem    = (idLinha) => atualizarBoletaAtual(b => ({ ...b, itensBoleta: b.itensBoleta.filter(i => i.idLinha !== idLinha) }));
-  const limparBoleta   = ()        => atualizarBoletaAtual({ itensBoleta: [] });
+  const removerItem = (idLinha) => atualizarBoletaAtual(b => ({ ...b, itensBoleta: (b.itensBoleta || []).filter(i => i.idLinha !== idLinha) }));
+  const limparBoleta = () => atualizarBoletaAtual({ itensBoleta: [] });
 
-  const resumo = itensBoleta.reduce(
-    (acc, item) => ({ total: acc.total + Number(item.total || 0), peso: acc.peso + Number(item.peso || 0), bags: acc.bags + Number(item.bags || 0) }),
+  const resumo = (itensBoleta || []).reduce(
+    (acc, item) => ({ 
+      total: acc.total + Number(item.total || 0), 
+      peso: acc.peso + Number(item.peso || 0), 
+      bags: acc.bags + Number(item.bags || 0) 
+    }),
     { total: 0, peso: 0, bags: 0 }
   );
 
   // ─── Confirmar pagamento ─────────────────────────────────────────────────
   const confirmarPagamentoComDados = async (boleta) => {
-    const { itensBoleta: itens, clienteSelecionadoId: clienteId, tipoNota: tipo } = boleta;
+    const { itensBoleta: itens = [], clienteSelecionadoId: clienteId, tipoNota: tipo } = boleta;
     const itensValidos = itens.filter(i => i.produtoId && Number(i.peso) > 0);
 
-    if (!clienteId)            return alert("Selecione um cliente/fornecedor.");
+    if (!clienteId)          return alert("Selecione um cliente/fornecedor.");
     if (!itensValidos.length)  return alert("Adicione produtos com peso válido.");
 
     setSalvandoNota(true);
@@ -228,6 +282,10 @@ const Boleta = () => {
           await api.post("/itens-pedido-venda", { fk_venda: Number(idVenda), fk_produto: Number(i.produtoId), pesoKg: Number(i.peso), precoUnitario: Number(i.valorUnitario) });
         }
       }
+
+      // Limpa do cache do Redis após salvar permanentemente no banco
+      await api.delete("/boletas/rascunho");
+      
       atualizarBoleta(boleta.id, { itensBoleta: [], pagamentoConfirmado: true });
     } catch (erro) {
       console.error("Erro:", erro.response?.data ?? erro.message);
@@ -260,7 +318,15 @@ const Boleta = () => {
 
   useEffect(() => { document.title = "CR Metais | Boleta"; }, []);
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // Tela de transição limpa para carregamento
+  if (carregandoCache) {
+    return (
+      <div className="pagina" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#fff', height: '100vh' }}>
+        <h2>Sincronizando rascunhos com o Redis...</h2>
+      </div>
+    );
+  }
+
   return (
     <div className="pagina pagina_boleta">
       <div className="boleta_abas_container">
@@ -365,8 +431,8 @@ const Boleta = () => {
               <div className="divisor_total" />
               <div className="detalhes_total">
                 <span>{itensBoleta.length} produto(s)</span>
-                <span>{resumo.bags} bag(s)</span>
-                <span>{resumo.peso.toFixed(2)} Kg</span>
+                <span>{resumo.bags || 0} bag(s)</span>
+                <span>{(resumo.peso || 0).toFixed(2)} Kg</span>
               </div>
             </div>
 
