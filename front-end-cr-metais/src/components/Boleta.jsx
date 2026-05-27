@@ -106,7 +106,7 @@ const Boleta = () => {
     // Dispara a sincronização 1 segundo após o usuário parar de interagir
     const delayDebounce = setTimeout(() => {
       sincronizarComRedis();
-    }, 1000);
+    }, 100);
 
     return () => clearTimeout(delayDebounce);
   }, [boletas, carregandoCache]);
@@ -322,7 +322,7 @@ const Boleta = () => {
   if (carregandoCache) {
     return (
       <div className="pagina" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#fff', height: '100vh' }}>
-        <h2>Sincronizando rascunhos com o Redis...</h2>
+        <h2>Carregando as boletas...</h2>
       </div>
     );
   }
