@@ -1,0 +1,235 @@
+/* ===== OVERLAY ===== */
+.hbm_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: hbm_fadeIn 0.2s ease;
+}
+
+@keyframes hbm_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== MODAL ===== */
+.hbm_modal {
+  background: #f8fafc;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 750px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  animation: hbm_slideUp 0.25s ease;
+  overflow: hidden;
+}
+
+@keyframes hbm_slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ===== HEADER ===== */
+.hbm_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: #020618;
+  color: #FACC15;
+}
+
+.hbm_header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FACC15;
+}
+
+.hbm_fechar {
+  background: none !important;
+  border: none !important;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px !important;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.hbm_fechar:hover {
+  color: #ef4444 !important;
+  background: none !important;
+  border: none !important;
+}
+
+/* ===== RESUMO TOPO ===== */
+.hbm_resumo_topo {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #0f172a;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ===== BODY ===== */
+.hbm_body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hbm_vazio {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 15px;
+  padding: 40px 0;
+}
+
+/* ===== CARD ===== */
+.hbm_card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.hbm_card_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hbm_card_header:hover {
+  background: #f1f5f9;
+}
+
+.hbm_card_info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hbm_card_info strong {
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.hbm_badge {
+  background: #020618;
+  color: #FACC15;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.hbm_card_valores {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hbm_card_hora {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.hbm_card_total {
+  color: #020618;
+  font-size: 16px;
+}
+
+/* ===== DETALHES (expandido) ===== */
+.hbm_card_detalhes {
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 18px;
+  background: #f8fafc;
+}
+
+.hbm_tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hbm_tabela th {
+  text-align: left;
+  padding: 8px 10px;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  background: transparent !important;
+  position: static;
+}
+
+.hbm_tabela td {
+  padding: 7px 10px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  background: transparent;
+}
+
+.hbm_card_rodape {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ===== BOTÃO NO SIDEBAR ===== */
+.botao_historico {
+  background-color: #0f172a !important;
+  border: 1px solid #FACC15 !important;
+  color: #FACC15 !important;
+}
+
+.botao_historico:hover {
+  background-color: #FACC15 !important;
+  color: #020618 !important;
+  border-color: #FACC15 !important;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 600px) {
+  .hbm_modal {
+    width: 96%;
+    max-height: 92vh;
+  }
+
+  .hbm_header {
+    padding: 14px 16px;
+  }
+
+  .hbm_header h2 {
+    font-size: 15px;
+  }
+
+  .hbm_body {
+    padding: 12px 14px;
+  }
+
+  .hbm_card_info {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}

@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import api from "../services/apiClient";
-import { FaTrashAlt, FaPlus, FaTimes } from "react-icons/fa";
+import { FaTrashAlt, FaPlus, FaTimes, FaHistory } from "react-icons/fa";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/themes/light.css";
 import "../styles/BoletaStyle.css";
+import HistoricoBoletasModal, { salvarBoletaConfirmada } from "./HistoricoBoletasModal";
 
 let contadorBoleta = 1;
 
@@ -17,18 +18,42 @@ const criarBoletaVazia = () => ({
   pagamentoConfirmado: false,
 });
 
+const carregarBoletasDoStorage = () => {
+  try {
+    const salvo = localStorage.getItem("boletas_rascunho");
+    if (salvo) {
+      const dados = JSON.parse(salvo);
+      if (Array.isArray(dados) && dados.length > 0) {
+        const maiorId = Math.max(...dados.map(b => b.id));
+        contadorBoleta = maiorId + 1;
+        return dados;
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao ler localStorage", e);
+  }
+  return null;
+};
+
 const Boleta = () => {
-  // Inicialização padrão segura
-  const [boletas, setBoletas] = useState([criarBoletaVazia()]);
-  const [abaAtiva, setAbaAtiva] = useState(boletas[0].id);
+  // Inicialização: tenta restaurar do localStorage para navegação SPA
+  const [boletas, setBoletas] = useState(() => {
+    return carregarBoletasDoStorage() || [criarBoletaVazia()];
+  });
+  const [abaAtiva, setAbaAtiva] = useState(() => {
+    const salvas = carregarBoletasDoStorage();
+    return salvas ? salvas[0].id : 1;
+  });
 
   const [clientes, setClientes] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [precosTabela, setPrecosTabela] = useState([]);
   const [tabelaPorFornecedor, setTabelaPorFornecedor] = useState({});
   const [carregando, setCarregando] = useState(false);
-  const [carregandoCache, setCarregandoCache] = useState(true); // Trava a tela enquanto lê o Redis
+  // Se já temos dados do localStorage, não precisa travar a tela esperando o Redis
+  const [carregandoCache, setCarregandoCache] = useState(() => !localStorage.getItem("boletas_rascunho"));
   const [salvandoNota, setSalvandoNota] = useState(false);
+  const [modalHistoricoAberto, setModalHistoricoAberto] = useState(false);
 
   const abaAtivaRef = useRef(abaAtiva);
   const boletasRef  = useRef(boletas);
@@ -90,10 +115,18 @@ const Boleta = () => {
     buscarRascunhoRedis();
   }, []);
 
-  // ─── 💾 AUTO-SALVAMENTO COM DEBOUNCE (Redis) ─────────────────────────────
+  // ─── 💾 AUTO-SALVAMENTO (localStorage + Redis) ───────────────────────────
   useEffect(() => {
-    if (carregandoCache) return; // Impede que salve dados vazios por cima antes de ler o Redis
+    if (carregandoCache) return;
 
+    // Salva no localStorage de forma síncrona (sobrevive a navegação SPA)
+    try {
+      localStorage.setItem("boletas_rascunho", JSON.stringify(boletas));
+    } catch (e) {
+      console.error("Falha ao salvar no localStorage", e);
+    }
+
+    // Sincroniza com Redis via debounce (persistência remota)
     const sincronizarComRedis = async () => {
       try {
         await api.post("/boletas/rascunho", boletas);
@@ -103,7 +136,6 @@ const Boleta = () => {
       }
     };
 
-    // Dispara a sincronização 1 segundo após o usuário parar de interagir
     const delayDebounce = setTimeout(() => {
       sincronizarComRedis();
     }, 100);
@@ -283,8 +315,14 @@ const Boleta = () => {
         }
       }
 
-      // Limpa do cache do Redis após salvar permanentemente no banco
+      // Salva a boleta confirmada no histórico de 24h
+      const entidade = clientes.find(c => String(c.id ?? c.idCliente ?? c.idFornecedor) === String(clienteId));
+      const nomeEntidade = entidade ? (entidade.nome ?? entidade.razaoSocial) : "Desconhecido";
+      salvarBoletaConfirmada(boleta, nomeEntidade, produtos);
+
+      // Limpa do cache do Redis e localStorage após salvar permanentemente no banco
       await api.delete("/boletas/rascunho");
+      localStorage.removeItem("boletas_rascunho");
       
       atualizarBoleta(boleta.id, { itensBoleta: [], pagamentoConfirmado: true });
     } catch (erro) {
@@ -451,10 +489,19 @@ const Boleta = () => {
                 <span className="texto_copiar">Copiar Nota</span>
                 <span className="icone_copiar texto_copiar">⧉</span>
               </button>
+              <button type="button" className="botao_historico" onClick={() => setModalHistoricoAberto(true)}>
+                <FaHistory />
+                <span>BOLETAS CONFIRMADAS</span>
+              </button>
             </div>
           </div>
         </aside>
       </div>
+
+      <HistoricoBoletasModal
+        aberto={modalHistoricoAberto}
+        onFechar={() => setModalHistoricoAberto(false)}
+      />
     </div>
   );
 };
