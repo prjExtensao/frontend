@@ -1,4 +1,4 @@
-name: Deploy Frontend to Dist Folder
+name: Deploy Frontend para EC2 Pública
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
@@ -16,33 +16,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
 
       - name: Build
-        # Diz ao Actions para rodar os comandos dentro da pasta do projeto
         working-directory: ./front-end-cr-metais
         run: |
           npm install
           npm run build
 
-      - name: Push to Target Repo
-        env:
-          TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
-        run: |
-          git clone https://x-access-token:${TARGET_TOKEN}@github.com/CRMetais/TF.git destino
-          
-          # Cria a pasta dist no destino e limpa arquivos antigos
-          mkdir -p destino/dist
-          rm -rf destino/dist/*
-          
-          # Copia os arquivos gerados de dentro da pasta do projeto
-          # Atenção: Se o seu projeto gerar uma pasta 'build' em vez de 'dist', troque a palavra abaixo!
-          cp -r front-end-cr-metais/dist/* destino/dist/
-          
-          cd destino
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          
-          git add dist/
-          git commit -m "chore: update frontend in dist folder" || echo "No changes"
-          git push origin main
+      - name: Deploy para EC2 (SSH rsync)
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ubuntu
+          TARGET: /home/ubuntu/frontend
+          ARGS: "-rltgoDzvO --delete" 
+          SOURCE: "./front-end-cr-metais/dist/"
